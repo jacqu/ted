@@ -1,0 +1,4 @@
+* Display a guide according to the keyboard layout
+* Trouver un moyen d'être en minuscules au démarrage
+* Faire le renvoi à la ligne automatique du dernier mot
+* Activer le caractère [FUNCT]-9 

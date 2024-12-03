@@ -226,7 +226,7 @@ void textedit_event( uint8_t c ) {
 		libscreen_copyline( 24, (uint8_t*)"[CTRL]-P: PRINT     [ESC]:    QUIT      " );
 
 		libscreen_copyline_inv( 
-							27, (uint8_t*)"VERSION 0.23           (c) SYNTAXIC 1985" );
+							27, (uint8_t*)"VERSION 1.00           (c) SYNTAXIC 1985" );
 		cgetc( );
 		break;
 

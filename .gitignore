@@ -1,0 +1,7 @@
+*.o
+*.i
+ed
+ed.dsk
+ed.tap
+ed.hfe
+sym

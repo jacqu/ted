@@ -177,15 +177,17 @@ int main( void ) {
 		printf( "  (  .  )     \\ \\   \\ \\    ( (  /\n" );
 		printf( "(O)-----(O)    ---   ----   ---\\  \\\n" );
 		liboric_basic( ed_blue_paper );
-		printf( "              (c) SYNTAXIC 1985\n\n" );
-		liboric_basic( ed_blue_paper );
-		printf( "USAGE: ted 'file'\n" );
+		printf( "\n" );
+		printf( "||                                  ||" );
+		printf( "|| USAGE: ted 'file' [ret]          ||" );
+		printf( "||                                  ||" );
+		printf( "||  file is lowercase w/o extension ||" );
+		printf( "||  blank password -> no encryption ||" );
+		printf( "||  ted 'readme' [ret][ret]: manual ||" );
+		printf( "||                                  ||" );
 		liboric_basic( ed_blue_paper );
 		printf( "\n" );
-		liboric_basic( ed_blue_paper );
-		printf( " > file is lowercase w/o extension <\n" );
-		liboric_basic( ed_blue_paper );
-		printf( " > blank password == no encryption <\n" );
+		printf( "                       %c 1985 SYNTAXIC", LIBSCREEN_COPYRIGHT );
 		return true;
 	}
 

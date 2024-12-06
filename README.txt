@@ -1,23 +1,21 @@
-ED: ENCRYPTED TEXT EDITOR FOR THE 6502
+TED: ENCRYPTED TEXT EDITOR FOR THE 6502
 
 INTRODUCTION
 
-"ED" is a simple text editor for 6502 CPU-based computers from the 80s. It has
-advanced cryptographic capabilities with an assembly-optimized chacha20
-implementation running at nearly 1 kBytes/s. It was designed to provide a
-reliable means of storing sensitive information, using a modern and efficient
-encryption algorithm along with old and thus safe electronic components,
-eliminating any risk of pernicious hardware backdoor implantation from the
-factory.
-
-THANKS
-
-The development of "ED" would not have been possible without the fantastic tools
-provided by the community, and especially cc65, a pretty reliable C compiler for
-6502 platforms and the various emulators available like Clock Signal or
-Oricutron.
+“TED” is a lightweight text editor designed for computers powered by the 6502 CPU. Despite its simplicity, it features advanced cryptographic capabilities, utilizing an assembly-optimized cipher capable of processing data at nearly 1 kB per second.
 
 ORIC IMPLEMENTATION
 
-"ED" works on the Oric Atmos platform with the Sedoric 3.0 operating system.
-Since only 32kB of RAM is available, only 250 lines of 40 columns are available.
+“TED” is compatible with the Oric Atmos platform, running the Sedoric operating system. The Oric’s 48kB of RAM, allow for allocating 250 lines of 40 columns to user-entered text.
+
+The software fully supports the Oric MCP-40 color printer. Text rendered in white, red, green, and blue on-screen, corresponds to print colors of black, red, green, and blue on the printer. Inverted fonts are highlighted through an overlay printing technique, providing enhanced emphasis for selected text.
+
+FILE HANDLING
+
+Text can be saved to disk either encrypted or in plain text, depending on whether a password is entered or not. If an incorrect password is provided, an error message is displayed, prompting the user to try again.
+
+Each save operation generates a .BAK file, ensuring the previous version can be recovered in case of issues. The size of saved files is approximately proportional to the length of the text. Filenames can be up to 9 characters long, with the .CHA extension automatically appended.
+
+When specifying filenames on the command line, they should be entered in lowercase and enclosed in single quotes. The closing quote is optional, and no space is required between "TED" and the opening quote.
+
+In the event of an error during saving, a message is displayed on the status line detailing the cause of the issue. The program then automatically returns to edit mode, allowing the user to address the problem and attempt saving again without losing any data.

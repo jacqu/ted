@@ -1,6 +1,4 @@
-* Display a guide according to the keyboard layout
 * Faire l'étiquette de la disquette
 * Faire la jacquette du boitier
-* Modifier le nom du programme en "ted"
-* Améliorer la banner d'introduction
 * Tester la taille max du mdp
+* Tester l'impression sur l'imprimante

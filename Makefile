@@ -1,7 +1,7 @@
 C_SOURCES  = chacha20_c.c textstore.c textedit.c liboric_c.c libscreen.c ed.c
 A_SOURCES  = liboric.s chacha20.s
 PROGRAM    = ted
-INIT       = 'PRINT CHR$$(20):TED'
+INIT       = 'CLS:PRINT CHR$$(20):TED'
 START      = 1536
 SYMBOLS    = sym
 

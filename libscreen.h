@@ -11,6 +11,7 @@
 #define LIBSCREEN_NB_CHARS					1120	// Number of chars on the screen
 
 #define LIBSCREEN_SPACE						32		// ASCII code for space char
+#define LIBSCREEN_COPYRIGHT					96		// ASCII code for copyright
 
 #define LIBSCREEN_INVERT_BIT				0x80	// Bit controlling ink/paper color inversion
 

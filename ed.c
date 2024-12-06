@@ -170,16 +170,22 @@ int main( void ) {
 	// If no argument, display a little help
 	
 	if ( !filename ) {
+		printf( "  /\\---/\\      -               /-\n" );
+		printf( "  | + + |     | |     ---      | |\n" );
+		printf( "   \\ ' /     (---)  / / ) )  --| |\n" );
+		printf( "(O)/   \\(O)   | |  ( --- /  / /  |\n" );
+		printf( "  (  .  )     \\ \\   \\ \\    ( (  /\n" );
+		printf( "(O)-----(O)    ---   ----   ---\\  \\\n" );
 		liboric_basic( ed_blue_paper );
-		printf( "                < ED >\n\n" );
+		printf( "              (c) SYNTAXIC 1985\n\n" );
 		liboric_basic( ed_blue_paper );
-		printf( "usage: ed 'file'\n" );
+		printf( "USAGE: ted 'file'\n" );
 		liboric_basic( ed_blue_paper );
 		printf( "\n" );
 		liboric_basic( ed_blue_paper );
-		printf( " > file is lowercase w/o extension\n" );
+		printf( " > file is lowercase w/o extension <\n" );
 		liboric_basic( ed_blue_paper );
-		printf( " > blank password == no encryption\n" );
+		printf( " > blank password == no encryption <\n" );
 		return true;
 	}
 

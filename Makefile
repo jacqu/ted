@@ -1,6 +1,6 @@
 C_SOURCES  = chacha20_c.c textstore.c textedit.c liboric_c.c libscreen.c ed.c
 A_SOURCES  = liboric.s chacha20.s
-PROGRAM    = ed
+PROGRAM    = ted
 INIT       = CLS:ED
 START      = 1536
 SYMBOLS    = sym

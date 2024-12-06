@@ -1,7 +1,7 @@
 *.o
 *.i
-ed
-ed.dsk
-ed.tap
-ed.hfe
+ted
+ted.dsk
+ted.tap
+ted.hfe
 sym

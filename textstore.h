@@ -22,23 +22,24 @@
 #define TEXTSTORE_ENO					0			// No error
 #define TEXTSTORE_EMEM					1			// Out of memory error
 
-#define TEXTSTORE_LPRINT				"LPRINT CHR$(%u);"
-//#define TEXTSTORE_LPRINT				"OUT %u"
+//#define TEXTSTORE_LPRINT				"LPRINT CHR$(%u);"
+#define TEXTSTORE_LPRINT				"OUT %u"
 													// Printer instruction for one char
-#define TEXTSTORE_LPRINT_LFCR			"LPRINT CHR$(13)"
-//#define TEXTSTORE_LPRINT_LFCR			"OUT 10:OUT 13"
+//#define TEXTSTORE_LPRINT_LFCR			"LPRINT CHR$(13)"
+#define TEXTSTORE_LPRINT_LFCR			"OUT 10:OUT 13"
 													// Printer LFCR
-#define TEXTSTORE_LPRINT_BS				"LPRINT CHAR$(8);"
-//#define TEXTSTORE_LPRINTF_BS			"OUT 8"
+//#define TEXTSTORE_LPRINT_BS				"LPRINT CHR$(8);"
+#define TEXTSTORE_LPRINT_BS				"OUT 8"
 													// Printer BS
-#define TEXSTORE_LPRINT_BLACK			"OUT 18:OUT 67:OUT 48:OUT 17"
+#define TEXTSTORE_LPRINT_BLACK			"OUT 18:LPRINT\"C0\":OUT 17"
 													// Printer black
-#define TEXSTORE_LPRINT_BLUE			"OUT 18:OUT 67:OUT 49:OUT 17"
+#define TEXTSTORE_LPRINT_BLUE			"OUT 18:LPRINT\"C1\":OUT 17"
 													// Printer blue
-#define TEXSTORE_LPRINT_GREEN			"OUT 18:OUT 67:OUT 50:OUT 17"
+#define TEXTSTORE_LPRINT_GREEN			"OUT 18:LPRINT\"C2\":OUT 17"
 													// Printer green
-#define TEXSTORE_LPRINT_RED				"OUT 18:OUT 67:OUT 50:OUT 17"
+#define TEXTSTORE_LPRINT_RED			"OUT 18:LPRINT\"C3\":OUT 17"
 													// Printer red
+#define TEXTSTORE_LPRINT_WAIT			1			// Waiting period before changing color
 
 #define TEXTSTORE_KBHIT_SLEEP			255			// Number of kbhit polling cycles
 

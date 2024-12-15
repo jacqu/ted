@@ -327,8 +327,10 @@ void textstore_print ( void ) {
 	uint16_t 	i;
 	uint8_t		j, k, c;
 
-	// Initialize color
-	liboric_basic( TEXSTORE_LPRINT_BLACK );
+	// Initialize color and CRLF
+	liboric_basic( TEXTSTORE_LPRINT_LFCR );
+	sleep ( TEXTSTORE_LPRINT_WAIT );
+	liboric_basic( TEXTSTORE_LPRINT_BLACK );
 	
 	// Print text
 	for ( i = 0; i < textstore.nblines; i++ ) {
@@ -338,23 +340,24 @@ void textstore_print ( void ) {
 			// Switch color and replace color code with a space
 			switch( c ) {
 				case LIBSCREEN_WHITE_INK:
-				liboric_basic( TEXSTORE_LPRINT_BLACK );
+				sleep ( TEXTSTORE_LPRINT_WAIT );
+				liboric_basic( TEXTSTORE_LPRINT_BLACK );
 				c = LIBSCREEN_SPACE;
 				break;
 				case LIBSCREEN_RED_INK:
-				liboric_basic( TEXSTORE_LPRINT_RED );
+				sleep ( TEXTSTORE_LPRINT_WAIT );
+				liboric_basic( TEXTSTORE_LPRINT_RED );
 				c = LIBSCREEN_SPACE;
 				break;
 				case LIBSCREEN_GREEN_INK:
-				liboric_basic( TEXSTORE_LPRINT_GREEN );
+				sleep ( TEXTSTORE_LPRINT_WAIT );
+				liboric_basic( TEXTSTORE_LPRINT_GREEN );
 				c = LIBSCREEN_SPACE;
 				break;
 				case LIBSCREEN_BLUE_INK:
-				liboric_basic( TEXSTORE_LPRINT_BLUE );
+				sleep ( TEXTSTORE_LPRINT_WAIT );
+				liboric_basic( TEXTSTORE_LPRINT_BLUE );
 				c = LIBSCREEN_SPACE;
-				break;
-				case LIBSCREEN_PLAIN_CHAR:
-				c = '*';
 				break;
 				case LIBSCREEN_BLACK_INK:
 				case LIBSCREEN_BLACK_PAPER:
@@ -376,6 +379,11 @@ void textstore_print ( void ) {
 						liboric_basic( TEXTSTORE_LPRINT_BS );
 					}
 				}
+				// Check for unknown char: replace with space
+				if ( 	( c < TEXTEDIT_ASCII_MIN ) || 
+						( c > TEXTEDIT_ASCII_MAX ) ) {
+					c = LIBSCREEN_SPACE;
+				}
 				break; 
 			}
 			if ( 	( c >= TEXTEDIT_ASCII_MIN ) && 
@@ -393,10 +401,14 @@ void textstore_print ( void ) {
 		}
 		// Send RET at each end of line and revert to default color
 		liboric_basic( TEXTSTORE_LPRINT_LFCR );
-		liboric_basic( TEXSTORE_LPRINT_BLACK );
+		sleep ( TEXTSTORE_LPRINT_WAIT );
+		liboric_basic( TEXTSTORE_LPRINT_BLACK );
 	}
 	end_print:
 	// Send RET at end of text and revert to default color
 	liboric_basic( TEXTSTORE_LPRINT_LFCR );
-	liboric_basic( TEXSTORE_LPRINT_BLACK );
+	sleep ( TEXTSTORE_LPRINT_WAIT );
+	liboric_basic( TEXTSTORE_LPRINT_BLACK );
+	liboric_basic( TEXTSTORE_LPRINT_LFCR );
+	liboric_basic( TEXTSTORE_LPRINT_LFCR );
 }

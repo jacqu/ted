@@ -22,21 +22,25 @@
 #define TEXTSTORE_ENO					0			// No error
 #define TEXTSTORE_EMEM					1			// Out of memory error
 
-//#define TEXTSTORE_LPRINT				"LPRINT CHR$(%u);"
+#define TEXTSTORE_PRINTER_GENERIC		0			// Generic parallel printer
+#define TEXTSTORE_PRINTER_MCP40			1			// Oric 4 colors plotter
+
 #define TEXTSTORE_LPRINT				"OUT %u"
 													// Printer instruction for one char
-//#define TEXTSTORE_LPRINT_LFCR			"LPRINT CHR$(13)"
 #define TEXTSTORE_LPRINT_LFCR			"OUT 10:OUT 13"
 													// Printer LFCR
-//#define TEXTSTORE_LPRINT_BS				"LPRINT CHR$(8);"
 #define TEXTSTORE_LPRINT_BS				"OUT 8"
 													// Printer BS
+#define TEXTSTORE_MCP40_BLACK			0
 #define TEXTSTORE_LPRINT_BLACK			"OUT 18:LPRINT\"C0\":OUT 17"
 													// Printer black
+#define TEXTSTORE_MCP40_BLUE			1													
 #define TEXTSTORE_LPRINT_BLUE			"OUT 18:LPRINT\"C1\":OUT 17"
 													// Printer blue
+#define TEXTSTORE_MCP40_GREEN			2
 #define TEXTSTORE_LPRINT_GREEN			"OUT 18:LPRINT\"C2\":OUT 17"
 													// Printer green
+#define TEXTSTORE_MCP40_RED				3
 #define TEXTSTORE_LPRINT_RED			"OUT 18:LPRINT\"C3\":OUT 17"
 													// Printer red
 #define TEXTSTORE_LPRINT_WAIT			1			// Waiting period before changing color
@@ -65,6 +69,8 @@ void		textstore_insert_chars	( uint16_t, uint8_t, uint8_t*, uint8_t );
 void 		textstore_del_chars		( uint16_t, uint8_t, uint8_t );
 void 		textstore_write_chars	( uint16_t, uint8_t, uint8_t*, uint8_t );
 uint16_t	textstore_sizeof		( void );
-void		textstore_print			( void );
+void 		textstore_color_mcp40	( uint8_t, uint8_t );
+void		textstore_print			( uint8_t );
+
 
 #endif /* __TEXTSTORE_H__ */

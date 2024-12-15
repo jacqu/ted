@@ -275,9 +275,16 @@ void textedit_event( uint8_t c ) {
 		break;
 
 		case TEXTEDIT_CTRL_P:
-		if ( textedit_status_YN( "SEND TEXT TO PRINTER?" ) == true ) {
-			textedit_status_print( "PRINTING.. (PRESS ANY KEY TO ABORT)" );
-			textstore_print( );
+		i = textedit_status_YN( "ORIC MCP-40 PRINTER?" );
+		if ( i == TEXTEDIT_CANCEL ) {
+			break;
+		}
+		textedit_status_print( "PRINTING.. (PRESS ANY KEY TO ABORT)" );
+		if ( i == true ) {
+			textstore_print( TEXTSTORE_PRINTER_MCP40 );
+		}
+		else {
+			textstore_print( TEXTSTORE_PRINTER_GENERIC );
 		}
 		break;
 

@@ -322,15 +322,40 @@ uint16_t textstore_sizeof( void ) {
 	return ( j - (uint16_t)&textstore );
 }
 
+// Change color on MCP-40
+void textstore_color_mcp40( uint8_t type, uint8_t color ) {
+	
+	if ( type == TEXTSTORE_PRINTER_MCP40 ) {
+		// This sleep is needed. Firmware bug ?
+		sleep ( TEXTSTORE_LPRINT_WAIT );
+
+		switch( color )	{
+			case TEXTSTORE_MCP40_BLACK:
+			liboric_basic( TEXTSTORE_LPRINT_BLACK );
+			break;
+			case TEXTSTORE_MCP40_BLUE:
+			liboric_basic( TEXTSTORE_LPRINT_BLUE );
+			break;
+			case TEXTSTORE_MCP40_GREEN:
+			liboric_basic( TEXTSTORE_LPRINT_GREEN );
+			break;
+			case TEXTSTORE_MCP40_RED:
+			liboric_basic( TEXTSTORE_LPRINT_RED );
+			break;
+			default:
+			break;
+		}
+	}
+}
+
 // Output text on printer
-void textstore_print ( void ) {
+void textstore_print ( uint8_t type ) {
 	uint16_t 	i;
 	uint8_t		j, k, c;
 
 	// Initialize color and CRLF
 	liboric_basic( TEXTSTORE_LPRINT_LFCR );
-	sleep ( TEXTSTORE_LPRINT_WAIT );
-	liboric_basic( TEXTSTORE_LPRINT_BLACK );
+	textstore_color_mcp40( type, TEXTSTORE_MCP40_BLACK );
 	
 	// Print text
 	for ( i = 0; i < textstore.nblines; i++ ) {
@@ -340,23 +365,19 @@ void textstore_print ( void ) {
 			// Switch color and replace color code with a space
 			switch( c ) {
 				case LIBSCREEN_WHITE_INK:
-				sleep ( TEXTSTORE_LPRINT_WAIT );
-				liboric_basic( TEXTSTORE_LPRINT_BLACK );
+				textstore_color_mcp40( type, TEXTSTORE_MCP40_BLACK );
 				c = LIBSCREEN_SPACE;
 				break;
 				case LIBSCREEN_RED_INK:
-				sleep ( TEXTSTORE_LPRINT_WAIT );
-				liboric_basic( TEXTSTORE_LPRINT_RED );
+				textstore_color_mcp40( type, TEXTSTORE_MCP40_RED );
 				c = LIBSCREEN_SPACE;
 				break;
 				case LIBSCREEN_GREEN_INK:
-				sleep ( TEXTSTORE_LPRINT_WAIT );
-				liboric_basic( TEXTSTORE_LPRINT_GREEN );
+				textstore_color_mcp40( type, TEXTSTORE_MCP40_GREEN );
 				c = LIBSCREEN_SPACE;
 				break;
 				case LIBSCREEN_BLUE_INK:
-				sleep ( TEXTSTORE_LPRINT_WAIT );
-				liboric_basic( TEXTSTORE_LPRINT_BLUE );
+				textstore_color_mcp40( type, TEXTSTORE_MCP40_BLUE );
 				c = LIBSCREEN_SPACE;
 				break;
 				case LIBSCREEN_BLACK_INK:
@@ -401,14 +422,12 @@ void textstore_print ( void ) {
 		}
 		// Send RET at each end of line and revert to default color
 		liboric_basic( TEXTSTORE_LPRINT_LFCR );
-		sleep ( TEXTSTORE_LPRINT_WAIT );
-		liboric_basic( TEXTSTORE_LPRINT_BLACK );
+		textstore_color_mcp40( type, TEXTSTORE_MCP40_BLACK );
 	}
 	end_print:
 	// Send RET at end of text and revert to default color
 	liboric_basic( TEXTSTORE_LPRINT_LFCR );
-	sleep ( TEXTSTORE_LPRINT_WAIT );
-	liboric_basic( TEXTSTORE_LPRINT_BLACK );
+	textstore_color_mcp40( type, TEXTSTORE_MCP40_BLACK );
 	liboric_basic( TEXTSTORE_LPRINT_LFCR );
 	liboric_basic( TEXTSTORE_LPRINT_LFCR );
 }

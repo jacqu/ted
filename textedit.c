@@ -789,8 +789,9 @@ void textedit_event( uint8_t c ) {
 					break;
 				}
 			}
+			// If character is a space it becomes the separator
 			// If no space found, separator is the cursor
-			if ( i == 0 ) {
+			if ( ( i == 0 ) || ( c == LIBSCREEN_SPACE ) ) {
 				i = textedit_cur_x; 
 			}
 			// If not on the last line

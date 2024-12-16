@@ -709,6 +709,20 @@ void textedit_event( uint8_t c ) {
 			}
 			i++;
 			if ( ( i < TEXTSTORE_LINE_SIZE ) && ( i > 1 ) ) {
+				// Check if line insertion is needed
+				if ( ( textstore.lsize[textedit_lpntr-1] - i ) > 
+						( TEXTSTORE_LINE_SIZE - textstore.lsize[textedit_lpntr] ) ) {
+					// Line available ?
+					if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
+						textedit_mem_full( );
+						break;
+					}
+					// Insert a new line at the current line
+					if ( textstore_insert_line( textedit_lpntr ) ) {
+						fprintf( stderr, "ERROR: INSERTING NEW LINE AFTER EOL\n" );
+						exit( TEXTEDIT_FATAL_ERROR );
+					}
+				}
 				// Copy last word of last line to this line
 				textstore_insert_chars( textedit_lpntr, 
 										0, 
@@ -747,16 +761,19 @@ void textedit_event( uint8_t c ) {
 			textedit_cur_x++;
 			// Check if cursor reached end of line
 			if ( textedit_cur_x >= TEXTSTORE_LINE_SIZE ) {
-				// Line available ?
-				if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
-					textedit_mem_full( );
-					textedit_cur_x--;
-					break;
-				}
-				// Insert a new line after the current line
-				if ( textstore_insert_line( textedit_lpntr + 1 ) ) {
-					fprintf( stderr, "ERROR: INSERTING NEW LINE AFTER EOL\n" );
-					exit( TEXTEDIT_FATAL_ERROR );
+				// If on the last line, insert line
+				if ( textedit_lpntr == textstore.nblines - 1 ) {
+					// Line available ?
+					if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
+						textedit_mem_full( );
+						textedit_cur_x--;
+						break;
+					}
+					// Insert a new line after the current line
+					if ( textstore_insert_line( textedit_lpntr + 1 ) ) {
+						fprintf( stderr, "ERROR: INSERTING NEW LINE AFTER EOL\n" );
+						exit( TEXTEDIT_FATAL_ERROR );
+					}
 				}
 				// Increment line pointer
 				textedit_lpntr++;
@@ -789,33 +806,29 @@ void textedit_event( uint8_t c ) {
 					break;
 				}
 			}
-			// If character is a space it becomes the separator
+			// If character is a space it becomes the new separator
+			// in case of the current separator being before.
 			// If no space found, separator is the cursor
-			if ( ( i == 0 ) || ( c == LIBSCREEN_SPACE ) ) {
+			if ( ( i == 0 ) || ( ( c == LIBSCREEN_SPACE ) && ( i < textedit_cur_x ) ) ) {
 				i = textedit_cur_x; 
 			}
-			// If not on the last line
-			// AND
-			// If number of characters to move fits in next line, 
-			// Skip new line insertion
-			if ( textedit_lpntr < textstore.nblines - 1 ) {
-				if ( 	( textstore.lsize[textedit_lpntr] - i ) < 
-						( TEXTSTORE_LINE_SIZE - textstore.lsize[textedit_lpntr+1] ) ) {
-					goto skip_line_insertion;
-				}	
+			// If on the last line
+			// OR
+			// If number of characters to move does not fits in next line, 
+			// Insert new line
+			if ( 	( textedit_lpntr == textstore.nblines - 1 ) ||
+					( ( textstore.lsize[textedit_lpntr] - i ) > ( TEXTSTORE_LINE_SIZE - textstore.lsize[textedit_lpntr+1] ) ) ) {
+				// Line available ?
+				if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
+					textedit_mem_full( );
+					break;
+				}
+				// Insert a new line after the current line
+				if ( textstore_insert_line( textedit_lpntr + 1 ) ) {
+					fprintf( stderr, "ERROR: INSERTING NEW LINE AFTER EOL\n" );
+					exit( TEXTEDIT_FATAL_ERROR );
+				}
 			}
-			// Line available ?
-			if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
-				textedit_mem_full( );
-				break;
-			}
-			// Insert a new line after the current line
-			if ( textstore_insert_line( textedit_lpntr + 1 ) ) {
-				fprintf( stderr, "ERROR: INSERTING NEW LINE AFTER EOL\n" );
-				exit( TEXTEDIT_FATAL_ERROR );
-			}
-
-			skip_line_insertion:
 
 			// Update saved flag
 			textedit_saved_flag = false;

@@ -14,7 +14,7 @@
 
 // Global defines
 #define ED_FN_PREFIX_LEN		9
-#define ED_FN_SUFFIX			".cha"
+#define ED_FN_SUFFIX			".ted"
 #define ED_FN_SUFFIX_LEN		4
 #define ED_FN_MAX_LENGTH		(ED_FN_PREFIX_LEN+ED_FN_SUFFIX_LEN)
 #define ED_PW_MAX_LENGTH		CHACHA_KEY_SZ

@@ -222,7 +222,7 @@ void textedit_event( uint8_t c ) {
 		libscreen_copyline( 16, (uint8_t*)"[CTRL]-U: RED   PAP [CTRL]-A: YELL  PAP " );
 		libscreen_copyline( 18, (uint8_t*)"[CTRL]-D: BLUE  PAP [CTRL]-O: INVERT    " );
 
-		libscreen_copyline( 22, (uint8_t*)"[CTRL]-G: PAGE UP   [CTRL]-B: PAGE DOWN " );
+		libscreen_copyline( 22, (uint8_t*)"[CTRL]-F: PAGE UP   [CTRL]-B: PAGE DOWN " );
 		libscreen_copyline( 24, (uint8_t*)"[CTRL]-P: PRINT     [ESC]:    QUIT      " );
 
 		libscreen_copyline_inv( 
@@ -377,6 +377,9 @@ void textedit_event( uint8_t c ) {
 			textstore_del_line( textedit_lpntr );
 			// Update x cursor
 			textedit_cur_x = textstore.lsize[textedit_lpntr];
+			if ( textedit_cur_x == TEXTSTORE_LINE_SIZE ) {
+				textedit_cur_x--;
+			}
 			// Update saved flag
 			textedit_saved_flag = false;
 			// Toggle the return flag

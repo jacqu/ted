@@ -700,7 +700,7 @@ void textedit_event( uint8_t c ) {
 			// Sanity check
 			#ifdef ED_DEBUG
 			if ( ( textedit_lpntr == 0 ) || ( textstore.lsize[textedit_lpntr-1] != TEXTSTORE_LINE_SIZE ) ) {
-				fprintf( stderr, "ERROR: WHILE WARPING\n" );
+				fprintf( stderr, "ERROR: WHILE WRAPPING\n" );
 				exit( TEXTEDIT_FATAL_ERROR );
 			}
 			#endif
@@ -764,8 +764,13 @@ void textedit_event( uint8_t c ) {
 			textedit_cur_x++;
 			// Check if cursor reached end of line
 			if ( textedit_cur_x >= TEXTSTORE_LINE_SIZE ) {
-				// If on the last line, insert line
-				if ( textedit_lpntr == textstore.nblines - 1 ) {
+				// IF on the last line
+				// OR
+				// IF next line is blank
+				// THEN
+				// Insert line
+				if ( 	( textedit_lpntr == textstore.nblines - 1 ) ||
+						( textstore.lsize[textedit_lpntr+1] == 0 ) ) {
 					// Line available ?
 					if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
 						textedit_mem_full( );
@@ -815,12 +820,16 @@ void textedit_event( uint8_t c ) {
 			if ( ( i == 0 ) || ( ( c == LIBSCREEN_SPACE ) && ( i < textedit_cur_x ) ) ) {
 				i = textedit_cur_x; 
 			}
-			// If on the last line
+			// IF on the last line
 			// OR
-			// If number of characters to move does not fits in next line, 
+			// IF number of characters to move does not fits in next line
+			// OR
+			// IF the next line is blank
+			// THEN
 			// Insert new line
 			if ( 	( textedit_lpntr == textstore.nblines - 1 ) ||
-					( ( textstore.lsize[textedit_lpntr] - i ) > ( TEXTSTORE_LINE_SIZE - textstore.lsize[textedit_lpntr+1] ) ) ) {
+					( ( textstore.lsize[textedit_lpntr] - i ) > ( TEXTSTORE_LINE_SIZE - textstore.lsize[textedit_lpntr+1] ) ) ||
+					( textstore.lsize[textedit_lpntr+1] == 0 ) ) {
 				// Line available ?
 				if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
 					textedit_mem_full( );

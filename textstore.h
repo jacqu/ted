@@ -5,7 +5,7 @@
 #ifndef __TEXTSTORE_H__
 #define __TEXTSTORE_H__
 
-#define TEXTSTORE_LINES_MAX				250			// Maximum number of lines in the text
+#define TEXTSTORE_LINES_MAX				249			// Maximum number of lines in the text
 #define TEXTSTORE_LINE_SIZE				LIBSCREEN_NB_COLS			
 													// Number of characters in a line
 #define TEXTSTORE_NONCE_SZ				CHACHA_NONCE_SZ

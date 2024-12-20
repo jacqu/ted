@@ -18,5 +18,10 @@
 #define ED_FN_SUFFIX_LEN		4
 #define ED_FN_MAX_LENGTH		(ED_FN_PREFIX_LEN+ED_FN_SUFFIX_LEN)
 #define ED_PW_MAX_LENGTH		CHACHA_KEY_SZ
+#define ED_FATAL_ERROR			-1
+#define ED_NO_ERROR				0
+
+// Primitives of public functions
+void ed_fatal_error( char* );
 
 #endif /* __ED_H__ */

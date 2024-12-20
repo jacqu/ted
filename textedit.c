@@ -51,8 +51,7 @@ void textedit_init( char* filename, char* password ) {
 	// Sanity check
 	#ifdef ED_DEBUG
 	if ( !filename ) {
-		fprintf( stderr, "ERROR: NO FILENAME PROVIDED\n" );
-		exit( TEXTEDIT_FATAL_ERROR );
+		ed_fatal_error( "NO FILENAME PROVIDED" );
 	}
 	#endif
 	textedit_filename = filename;
@@ -84,8 +83,7 @@ void textedit_init( char* filename, char* password ) {
 
 		// Check file validity
 		if ( textstore.magic != TEXTSTORE_MAGIC ) {
-			fprintf( stderr, "INVALID PASSWORD\n" );
-			exit( TEXTEDIT_FATAL_ERROR );
+			ed_fatal_error( "INVALID PASSWORD" );
 		}
 		break;
 		
@@ -95,14 +93,12 @@ void textedit_init( char* filename, char* password ) {
 
 		// Allocate first line of text
 		if ( textstore_insert_line( TEXTEDIT_TEXT_BASE ) ) {
-			fprintf( stderr, "ERROR: UNABLE TO ALLOCATE FIRST LINE\n" );
-			exit( TEXTEDIT_FATAL_ERROR );
+			ed_fatal_error( "UNABLE TO ALLOCATE FIRST LINE" );
 		}
 		break;
 
 		default:
-		fprintf( stderr, "ERROR: LOADING FILE\n" );
-		exit( TEXTEDIT_FATAL_ERROR );
+		ed_fatal_error( "LOADING FILE" );
 	}
 
 	// Clear screen
@@ -343,7 +339,7 @@ void textedit_event( uint8_t c ) {
 			i = textedit_status_YN( "QUIT WITHOUT SAVING?" );
 			if (  i == true ) {
 				liboric_basic( "RESET" );
-				exit ( TEXTEDIT_NO_ERROR );
+				exit ( ED_NO_ERROR );
 			}
 			else {
 				if ( i == TEXTEDIT_CANCEL )
@@ -351,13 +347,13 @@ void textedit_event( uint8_t c ) {
 				textedit_event( TEXTEDIT_CTRL_S );
 				if ( textedit_saved_flag ) {
 					liboric_basic( "RESET" );
-					exit ( TEXTEDIT_NO_ERROR );
+					exit ( ED_NO_ERROR );
 				}
 			}
 		}
 		else {
 			liboric_basic( "RESET" );
-			exit ( TEXTEDIT_NO_ERROR );
+			exit ( ED_NO_ERROR );
 		}
 		break;
 
@@ -414,8 +410,7 @@ void textedit_event( uint8_t c ) {
 		}
 		// Insert a new line
 		if ( textstore_insert_line( textedit_lpntr ) ) {
-			fprintf( stderr, "ERROR: PASTING NEW LINE\n" );
-			exit( TEXTEDIT_FATAL_ERROR );
+			ed_fatal_error( "PASTING NEW LINE" );
 		}
 		// Paste buffer to the new line
 		textstore_write_chars( textedit_lpntr, 0, textedit_copy_buf, textedit_copy_buf_sz );
@@ -607,8 +602,7 @@ void textedit_event( uint8_t c ) {
 		}
 		// Insert a new line
 		if ( textstore_insert_line( ++textedit_lpntr ) ) {
-			fprintf( stderr, "ERROR: INSERTING NEW LINE AFTER RET\n" );
-			exit( TEXTEDIT_FATAL_ERROR );
+			ed_fatal_error( "INSERTING NEW LINE AFTER RET" );
 		}
 		// Cursor before the end of the line ?
 		if ( textedit_cur_x < textstore.lsize[textedit_lpntr-1] ) {
@@ -700,8 +694,7 @@ void textedit_event( uint8_t c ) {
 			// Sanity check
 			#ifdef ED_DEBUG
 			if ( ( textedit_lpntr == 0 ) || ( textstore.lsize[textedit_lpntr-1] != TEXTSTORE_LINE_SIZE ) ) {
-				fprintf( stderr, "ERROR: WHILE WRAPPING\n" );
-				exit( TEXTEDIT_FATAL_ERROR );
+				ed_fatal_error( "WHILE WRAPPING" );
 			}
 			#endif
 			// Scan backward for a space character in the previous line
@@ -722,8 +715,7 @@ void textedit_event( uint8_t c ) {
 					}
 					// Insert a new line at the current line
 					if ( textstore_insert_line( textedit_lpntr ) ) {
-						fprintf( stderr, "ERROR: INSERTING NEW LINE AFTER EOL\n" );
-						exit( TEXTEDIT_FATAL_ERROR );
+						ed_fatal_error( "INSERTING NEW LINE AFTER EOL" );
 					}
 				}
 				// Copy last word of last line to this line
@@ -779,8 +771,7 @@ void textedit_event( uint8_t c ) {
 					}
 					// Insert a new line after the current line
 					if ( textstore_insert_line( textedit_lpntr + 1 ) ) {
-						fprintf( stderr, "ERROR: INSERTING NEW LINE AFTER EOL\n" );
-						exit( TEXTEDIT_FATAL_ERROR );
+						ed_fatal_error( "INSERTING NEW LINE AFTER EOL" );
 					}
 				}
 				// Increment line pointer
@@ -837,8 +828,7 @@ void textedit_event( uint8_t c ) {
 				}
 				// Insert a new line after the current line
 				if ( textstore_insert_line( textedit_lpntr + 1 ) ) {
-					fprintf( stderr, "ERROR: INSERTING NEW LINE AFTER EOL\n" );
-					exit( TEXTEDIT_FATAL_ERROR );
+					ed_fatal_error( "INSERTING NEW LINE AFTER EOL" );
 				}
 			}
 
@@ -936,8 +926,7 @@ void textedit_status_refresh( uint8_t c ) {
 	TEXTEDIT_UNUSED( c );
 
 	if ( textedit_filename == NULL ) {
-		fprintf( stderr, "ERROR: EMPTY FILENAME\n" );
-		exit( -1 );
+		ed_fatal_error( "EMPTY FILENAME" );
 	}
 
 	if ( textedit_saved_flag ) {

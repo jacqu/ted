@@ -78,8 +78,7 @@ uint8_t textstore_insert_line( uint16_t line_nb ) {
 	// Sanity check
 	#ifdef ED_DEBUG
 	if ( line_nb > textstore.nblines ) {
-		fprintf( stderr, "ERROR: INSERTION BEYOND END OF TEXT\n" );
-		exit( TEXTSTORE_FATAL_ERROR );
+		ed_fatal_error( "INSERTION BEYOND END OF TEXT" );
 	}
 	#endif
 
@@ -121,8 +120,7 @@ void textstore_del_line( uint16_t line_nb ) {
 	// Sanity check
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
-		fprintf( stderr, "ERROR: DELETION BEYOND END OF TEXT\n" );
-		exit( TEXTSTORE_FATAL_ERROR );
+		ed_fatal_error( "DELETION BEYOND END OF TEXT" );
 	}
 	#endif
 
@@ -132,8 +130,7 @@ void textstore_del_line( uint16_t line_nb ) {
 	// Sanity check
 	#ifdef ED_DEBUG
 	if ( textstore.ptflag[i] == TEXTSTORE_LINEPT_FREE ) {
-		fprintf( stderr, "ERROR: REMOVING FREE POINTER\n" );
-		exit( TEXTSTORE_FATAL_ERROR );
+		ed_fatal_error( "REMOVING FREE POINTER" );
 	}
 	#endif
 
@@ -157,12 +154,10 @@ void textstore_insert_char( uint16_t line_nb, uint8_t char_nb, uint8_t char_c ) 
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
-		fprintf( stderr, "ERROR: INSERT CHAR BEYOND END OF TEXT\n" );
-		exit( TEXTSTORE_FATAL_ERROR );
+		ed_fatal_error( "INSERT CHAR BEYOND END OF TEXT" );
 	}
 	if ( char_nb > textstore.lsize[line_nb] ) {
-		fprintf( stderr, "ERROR: INSERT CHAR BEYOND END OF LINE\n" );
-		exit( TEXTSTORE_FATAL_ERROR );
+		ed_fatal_error( "INSERT CHAR BEYOND END OF LINE" );
 	}
 	#endif
 
@@ -188,12 +183,10 @@ void textstore_del_char( uint16_t line_nb, uint8_t char_nb ) {
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
-		fprintf( stderr, "ERROR: DEL CHAR BEYOND END OF TEXT\n" );
-		exit( TEXTSTORE_FATAL_ERROR );
+		ed_fatal_error( "DEL CHAR BEYOND END OF TEXT" );
 	}
 	if ( char_nb >= textstore.lsize[line_nb] ) {
-		fprintf( stderr, "ERROR: DEL CHAR BEYOND END OF LINE\n" );
-		exit( TEXTSTORE_FATAL_ERROR );
+		ed_fatal_error( "DEL CHAR BEYOND END OF LINE" );
 	}
 	#endif
 
@@ -217,12 +210,10 @@ void textstore_insert_chars( uint16_t line_nb, uint8_t char_nb, uint8_t *chars, 
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
-		fprintf( stderr, "ERROR: INSERT CHARS BEYOND END OF TEXT\n" );
-		exit( TEXTSTORE_FATAL_ERROR );
+		ed_fatal_error( "INSERT CHARS BEYOND END OF TEXT" );
 	}
 	if ( char_nb > textstore.lsize[line_nb] ) {
-		fprintf( stderr, "ERROR: INSERT CHARS BEYOND END OF LINE\n" );
-		exit( TEXTSTORE_FATAL_ERROR );
+		ed_fatal_error( "INSERT CHARS BEYOND END OF LINE" );
 	}
 	#endif
 
@@ -253,12 +244,10 @@ void textstore_del_chars( uint16_t line_nb, uint8_t char_nb, uint8_t chars_nb ) 
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
-		fprintf( stderr, "ERROR: DEL CHARS BEYOND END OF TEXT\n" );
-		exit( TEXTSTORE_FATAL_ERROR );
+		ed_fatal_error( "DEL CHARS BEYOND END OF TEXT" );
 	}
 	if ( char_nb >= textstore.lsize[line_nb] ) {
-		fprintf( stderr, "ERROR: DEL CHARS BEYOND END OF LINE\n" );
-		exit( TEXTSTORE_FATAL_ERROR );
+		ed_fatal_error( "DEL CHARS BEYOND END OF LINE" );
 	}
 	#endif
 
@@ -284,12 +273,10 @@ void textstore_write_chars( uint16_t line_nb, uint8_t char_nb, uint8_t *chars, u
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
-		fprintf( stderr, "ERROR: WRITE CHARS BEYOND END OF TEXT\n" );
-		exit( TEXTSTORE_FATAL_ERROR );
+		ed_fatal_error( "WRITE CHARS BEYOND END OF TEXT" );
 	}
 	if ( char_nb >= TEXTSTORE_LINE_SIZE ) {
-		fprintf( stderr, "ERROR: WRITE CHARS BEYOND END OF LINE\n" );
-		exit( TEXTSTORE_FATAL_ERROR );
+		ed_fatal_error( "WRITE CHARS BEYOND END OF LINE" );
 	}
 	#endif
 

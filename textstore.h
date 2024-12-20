@@ -5,7 +5,7 @@
 #ifndef __TEXTSTORE_H__
 #define __TEXTSTORE_H__
 
-#define TEXTSTORE_LINES_MAX				249			// Maximum number of lines in the text
+#define TEXTSTORE_LINES_MAX				250			// Maximum number of lines in the text
 #define TEXTSTORE_LINE_SIZE				LIBSCREEN_NB_COLS			
 													// Number of characters in a line
 #define TEXTSTORE_NONCE_SZ				CHACHA_NONCE_SZ
@@ -18,7 +18,6 @@
 #define TEXTSTORE_LINEPT_FREE			1			// Line pointer is available
 #define TEXTSTORE_LINEPT_USED			0			// Line pointer is used
 
-#define TEXTSTORE_FATAL_ERROR			-1			// Fatal error
 #define TEXTSTORE_ENO					0			// No error
 #define TEXTSTORE_EMEM					1			// Out of memory error
 

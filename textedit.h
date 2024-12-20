@@ -62,8 +62,6 @@
 #define TEXTEDIT_UI_CA_ANSWER		'c'				// Character for the CANCEL answer
 
 // Misc
-#define TEXTEDIT_FATAL_ERROR		-1				// Fatal error code
-#define TEXTEDIT_NO_ERROR			0				// No error code
 #define TEXTEDIT_CANCEL				2				// Cancel return code
 
 // Globals

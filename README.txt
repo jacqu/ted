@@ -14,7 +14,7 @@ FILE HANDLING
 
 Text can be saved to disk either encrypted or in plain text, depending on whether a password is entered or not. If an incorrect password is provided, an error message is displayed, prompting the user to try again.
 
-Each save operation generates a .BAK file, ensuring the previous version can be recovered in case of issues. The size of saved files is approximately proportional to the length of the text. Filenames can be up to 9 characters long, with the .CHA extension automatically appended.
+Each save operation generates a .BAK file, ensuring the previous version can be recovered in case of issues. The size of saved files is approximately proportional to the length of the text. Filenames can be up to 9 characters long, with the .TED extension automatically appended.
 
 When specifying filenames on the command line, they should be entered in lowercase and enclosed in single quotes. The closing quote is optional, and no space is required between "TED" and the opening quote.
 

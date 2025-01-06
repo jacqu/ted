@@ -945,7 +945,7 @@ void textedit_status_refresh( uint8_t c ) {
 
 	snprintf( 	textedit_status, 
 				LIBSCREEN_NB_COLS+1, 
-				"%-13s%c [CTRL-G]:GUIDE %03d%% %s",  
+				"%-13s%c [CTRL]-G:GUIDE %03d%% %s",  
 				textedit_filename,
 				saved,
 				( textstore.nblines * 100 ) / TEXTSTORE_LINES_MAX,

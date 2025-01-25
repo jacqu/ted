@@ -81,3 +81,4 @@ After exiting, the program automatically reboots the disk operating system.
 
 THANKS
 
+Special thanks to the fantastic Oric community for all its contributions, without which this project would never have come to life.

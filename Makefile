@@ -9,10 +9,12 @@ CC65_HOME  = /Users/jacques/Personnel/Retro/Oric/CC65/cc65
 TOOLS_HOME = /Users/jacques/Personnel/Retro/Oric/osdk/osdk/main
 HXC_HOME   = /Users/jacques/Personnel/Retro/Oric/Microdisc/HxCFloppyEmulator
 
+GIT_VER    = "$(shell git log -1 --date=format:'%Y/%m/%d' --format='%ad')"
+
 CC         = $(CC65_HOME)/bin/cc65
 CA         = $(CC65_HOME)/bin/ca65
 LD         = $(CC65_HOME)/bin/ld65
-CFLAGS     = -D__ATMOS__ --standard cc65 -DSTART_ADDRESS=$(START) -Oirs --codesize 500 -T -g -t atmos
+CFLAGS     = -DTED_VERSION=\"$(GIT_VER)\" -D__ATMOS__ --standard cc65 -DSTART_ADDRESS=$(START) -Oirs --codesize 500 -T -g -t atmos
 CAFLAGS    = -g
 LDFLAGS    = -C $(CC65_HOME)/cfg/atmosd.cfg -L$(CC65_HOME)/lib $(CC65_HOME)/lib/atmos.lib -D__START_ADDRESS__=$(START) -Ln $(SYMBOLS)
 RM         = /bin/rm -f

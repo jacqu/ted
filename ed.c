@@ -193,7 +193,7 @@ int main( void ) {
 		printf( ">                                    <" );
 		liboric_basic( ed_blue_paper );
 		printf( "\n" );
-		printf( "                       %c 1985 SYNTAXIC", LIBSCREEN_COPYRIGHT );
+		printf( "Version %s\n", TED_VERSION );
 		return true;
 	}
 

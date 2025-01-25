@@ -222,11 +222,18 @@ void textedit_event( uint8_t c ) {
 		libscreen_copyline( 24, (uint8_t*)"[CTRL]-P: PRINT     [ESC]:    QUIT      " );
 
 		libscreen_copyline_inv( 
-							27, (uint8_t*)"VERSION 1.00           (c) SYNTAXIC 1985" );
+							27, (uint8_t*)"                       (c) SYNTAXIC 2025" );
 		cgetc( );
 		break;
 
 		case TEXTEDIT_CTRL_S:
+		// Checking if media is present by issueing dummy command
+		liboric_basic( "unprot \"ted" );
+		if ( liboric_error_nd( ) != SEDORIC_NO_ERROR ) {
+			// Error encountered, abort
+			textedit_status_popup( "DISK ERROR! (TED SHOULD BE ON THE DISK)" );
+			break;
+		}
 		// Encrypting
 		if ( textedit_password ) {
 			textedit_status_print( "ENCRYPTING.." );

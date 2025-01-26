@@ -227,11 +227,16 @@ void textedit_event( uint8_t c ) {
 		break;
 
 		case TEXTEDIT_CTRL_S:
-		// Checking if media is present by issueing dummy command
-		liboric_basic( "unprot \"ted" );
-		if ( liboric_error_nd( ) != SEDORIC_NO_ERROR ) {
+		// Checking if media is readable by issueing dummy command
+		snprintf( 	liboric_cmd, 
+					LIBORIC_MAX_CMD_SIZE, 
+					"UNPROT\"%s\"", 
+					textedit_filename );
+		liboric_basic( liboric_cmd );
+		if ( 	( liboric_error_nd( ) != SEDORIC_NO_ERROR ) &&
+				( liboric_error_nd( ) != SEDORIC_FILE_NOT_FOUND_ERROR ) ) {
 			// Error encountered, abort
-			textedit_status_popup( "DISK ERROR! (TED SHOULD BE ON THE DISK)" );
+			textedit_status_popup( "DISK ERROR!" );
 			break;
 		}
 		// Encrypting

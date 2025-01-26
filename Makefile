@@ -9,7 +9,7 @@ CC65_HOME  = /Users/jacques/Personnel/Retro/Oric/CC65/cc65
 TOOLS_HOME = /Users/jacques/Personnel/Retro/Oric/osdk/osdk/main
 HXC_HOME   = /Users/jacques/Personnel/Retro/Oric/Microdisc/HxCFloppyEmulator
 
-GIT_VER    = "$(shell git log -1 --date=format:'%Y/%m/%d' --format='%ad')"
+GIT_VER    = "$(shell git log -1 --date=format:'%Y.%m.%d' --format='%ad')"
 
 CC         = $(CC65_HOME)/bin/cc65
 CA         = $(CC65_HOME)/bin/ca65

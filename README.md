@@ -17,5 +17,7 @@ This repository includes a README.txt explaining how TED works. To run it, youâ€
 Below, youâ€™ll find a short demo of TED in action.
 
 Enjoy!
+
 Jacques
-[![Watch the video]](https://youtu.be/e0JQoOaf2OE)
+
+[![TED DEMO](http://img.youtube.com/vi/e0JQoOaf2OE/0.jpg)](http://www.youtube.com/watch?v=e0JQoOaf2OE)

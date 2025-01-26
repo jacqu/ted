@@ -1,16 +1,21 @@
 # TED: A Frugal Text Editor for the 6502 with Modern Encryption
 
-I recently got interested in frugal engineering in general and frugal computing in particular. TED is an attempt to develop a tiny text editor with all the basics features and an state of the art encryption algorithm (ChaCha20).
+I recently developed an interest in frugal engineering in general and frugal computing in particular. TED is my attempt to create a tiny yet functional text editor with all the essential features, coupled with a state-of-the-art encryption algorithm—ChaCha20.
 
-It runs smoothely on a 6502 platform clocked at a whoping 1MHz. The encryption achieves a throughput of 950 Bytes/s which is pretty solid for a CPU of this era.
+TED runs smoothly on a 6502-based platform clocked at just 1 MHz. Despite the limited processing power, it achieves an encryption throughput of 950 bytes per second, which is quite impressive for a CPU of this era.
 
-I learned 3 lessons from this journey: memset, memcpy, memmove. If you want to extract all the juice of your CPU, you should heavily rely on these three routines in your C code. They improve a lot the performace since they inline some assembly-optimized code.
+## Lessons Learned
 
-Of course, if you want to be really efficient, you have to write your code directly in assmebly language. I discovered that macros makes your life a lot simplier , almost as easy than C code when you are accustomed.
+Throughout this journey, I gained three key insights: memset, memcpy, and memmove. If you want to extract every ounce of performance from your CPU, these routines are indispensable in your C code. They significantly boost efficiency by inlining assembly-optimized operations.
 
-In this repo you will find a README.txt file explaining how TED works. You will need an emulator for the Oric (Clock Signal or Oricutron) or you can run the editor directly on the real hardware with a floppy disk.
+However, for true performance optimization, writing directly in assembly language is the way to go. I also discovered that macros make assembly programming much simpler—almost as convenient as C, once you get accustomed to them.
 
-Below you will find a little demo of TED.
+## How to Run TED
+
+This repository includes a README.txt explaining how TED works. To run it, you’ll need an Oric emulator such as *Clock Signal* or *Oricutron*. Alternatively, you can run TED on real Oric hardware using a floppy disk drive operated by *Sedoric*.
+
+Below, you’ll find a short demo of TED in action.
 
 Enjoy!
 Jacques
+[![Watch the video]](https://youtu.be/e0JQoOaf2OE)

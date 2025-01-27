@@ -62,7 +62,7 @@ unsigned char liboric_error_nd( void ) {
 
 void liboric_basic( char *str ) {
 
-	if ( strlen( str ) > LIBORIC_MAX_CMD_SIZE ) {
+	if ( strlen( str ) + 1 > LIBORIC_MAX_CMD_SIZE ) {
 		fprintf( stderr, "ERROR: LIBORIC COMMAND TOO LONG\n" );
 		exit( -1 );
 	}

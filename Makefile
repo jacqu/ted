@@ -21,7 +21,7 @@ CA65       ?= $(CC65_HOME)/bin/ca65
 LD65       ?= $(CC65_HOME)/bin/ld65
 CFLAGS     = -DTED_VERSION=\"$(GIT_VER)\" -D__ATMOS__ --standard cc65 -DSTART_ADDRESS=$(START) -Oirs --codesize 500 -T -g -t atmos
 CAFLAGS    = -g
-LDFLAGS    = -C $(CC65_HOME)/cfg/atmosd.cfg -L$(CC65_HOME)/lib $(CC65_HOME)/lib/atmos.lib -D__START_ADDRESS__=$(START) -Ln $(SYMBOLS)
+LDFLAGS    = -C ./atmos_ted.cfg -L$(CC65_HOME)/lib $(CC65_HOME)/lib/atmos.lib -D__START_ADDRESS__=$(START) -Ln $(SYMBOLS)
 RM         = /bin/rm -f
 HEADER     = $(TOOLS_HOME)/header/header
 TAP2DSK    = $(TOOLS_HOME)/tap2dsk/tap2dsk

@@ -14,6 +14,10 @@ However, for true performance optimization, writing directly in assembly languag
 
 This repository includes a **README.txt** explaining how TED works. To run it, you’ll need an Oric emulator such as **Clock Signal** or **Oricutron**. Alternatively, you can run TED on real **Oric** hardware using a floppy disk drive operated by **Sedoric**.
 
+The disk image **ted_release.hfe** contains the readme.ted file that is readable within the emulator or on a real Oric.
+
+The other disk images **ted.dsk** and **ted.hfe** contain only the editor program.
+
 Below, you’ll find a short demo of TED in action.
 
 Enjoy!

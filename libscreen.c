@@ -102,3 +102,8 @@ void libscreen_display( uint16_t offset, uint8_t **b ) {
 	memcpy( (uint8_t*)(LIBSCREEN_BASE_ADDRESS+26*LIBSCREEN_NB_COLS), b[offset+25], LIBSCREEN_NB_COLS );
 	memcpy( (uint8_t*)(LIBSCREEN_BASE_ADDRESS+27*LIBSCREEN_NB_COLS), b[offset+26], LIBSCREEN_NB_COLS );
 }
+
+// Scroll screen one line downwards
+void libscreen_scroll_down( void ) {
+	memmove( (uint8_t*)(LIBSCREEN_BASE_ADDRESS+LIBSCREEN_NB_COLS), (uint8_t*)(LIBSCREEN_BASE_ADDRESS), LIBSCREEN_NB_CHARS - LIBSCREEN_NB_COLS );
+}

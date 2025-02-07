@@ -14,7 +14,7 @@ INIT       = 'CLS:PRINT CHR$$(20):TED'
 START      = 1536
 SYMBOLS    = sym
 
-GIT_VER    = "$(shell git log -1 --date=format:'%Y.%m.%d' --format='%ad')"
+GIT_VER    = "$(shell date '+%y.%m.%d.%H')"
 
 CC65       ?= $(CC65_HOME)/bin/cc65
 CA65       ?= $(CC65_HOME)/bin/ca65

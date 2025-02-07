@@ -31,6 +31,72 @@ bool			textedit_inverted_flag = false;
 bool			textedit_ret_flag = false;
 char*			textedit_filename = NULL;
 char*			textedit_password = NULL;
+uint32_t 		textedit_sc_counter;
+
+// Screen saver
+void textedit_screensaver( void ) {
+	static bool 	init_flag = false;
+	static bool		leader_flag = false;
+	static uint8_t	col_on[LIBSCREEN_NB_COLS];
+	static uint8_t	col_off[LIBSCREEN_NB_COLS];
+	uint16_t		i;
+
+	if ( !textedit_sc_counter ) {
+
+		// If needed, initialize screensaver
+		if ( init_flag ) {
+
+			// Clear screen
+			libscreen_clear( LIBSCREEN_SPACE );
+
+			// Initialize stripes counters
+			for ( i = 1; i < LIBSCREEN_NB_COLS; i++ ) {
+				col_on[i] = (uint8_t)( rand( ) % LIBSCREEN_NB_LINES );
+				col_off[i] = (uint8_t)( rand( ) % LIBSCREEN_NB_LINES );
+			}
+
+			init_flag = false;
+		}
+
+		// Refresh first line
+		libscreen_textbuf[0] = LIBSCREEN_GREEN_INK;
+		for ( i = 1; i < LIBSCREEN_NB_COLS; i++ ) {
+			if ( col_on[i] ) {
+				col_on[i]--;
+				libscreen_textbuf[i] = LIBSCREEN_SPACE;
+				if ( col_on[i] == 0 ) {
+					leader_flag = true;
+				}
+			}
+			else {
+				if ( col_off[i] ) {
+					col_off[i]--;
+					// The magic occurs here
+					libscreen_textbuf[i] = '!' + ( rand() % 94 );
+					if ( leader_flag ) {
+						leader_flag = false;
+						libscreen_textbuf[i] = LIBSCREEN_PLAIN;
+					}
+				}
+				else {
+					col_on[i] = (uint8_t)( rand( ) % LIBSCREEN_NB_LINES );
+					col_off[i] = (uint8_t)( rand( ) % LIBSCREEN_NB_LINES );
+				}
+			}
+		}
+
+		// Scroll screen
+		libscreen_scroll_down(  );
+
+	}
+	else {
+		textedit_sc_counter--;
+		if ( !textedit_sc_counter ) {
+			init_flag = true;
+		}
+	}
+
+}
 
 // Check array equality
 bool textedit_equal( uint8_t *first_block, uint8_t *second_block, uint8_t block_sizes ) {
@@ -120,7 +186,7 @@ void textedit_init( char* filename, char* password ) {
 
 	// Screen refresh
 	textedit_screen_refresh( );
-	textedit_status_refresh( 0 );
+	textedit_status_refresh( );
 	textedit_cursor_refresh( );
 }
 
@@ -206,8 +272,10 @@ void textedit_event( uint8_t c ) {
 		// Display help
 		case TEXTEDIT_CTRL_G:
 		libscreen_clear( LIBSCREEN_SPACE );
-		libscreen_copyline_inv( 
-							0, 	(uint8_t*)"          U S E R    G U I D E          " );
+		snprintf( 	textedit_status, 
+					LIBSCREEN_NB_COLS+1,
+					"%s", 				  "          U S E R    G U I D E          " );
+		libscreen_copyline_inv( 0, 	(uint8_t*)textedit_status );
 
 		libscreen_copyline( 4, 	(uint8_t*)"[CTRL]-S: SAVE      [CTRL]-C: COPY  LINE" );
 		libscreen_copyline( 6, 	(uint8_t*)"[CTRL]-X: CUT LINE  [CTRL]-V: PASTE LINE" );
@@ -223,7 +291,16 @@ void textedit_event( uint8_t c ) {
 
 		libscreen_copyline_inv( 
 							27, (uint8_t*)"                       (c) SYNTAXIC 2025" );
+		
+		// Active wait and launch of a screensaver after a while
+		textedit_sc_counter = TEXTEDIT_SCREENSAVER_TO;
+		while ( !kbhit() ) {
+			textedit_screensaver( );
+		}
+
+		// Keyboard buffer flush
 		cgetc( );
+
 		break;
 
 		case TEXTEDIT_CTRL_S:
@@ -899,7 +976,7 @@ void textedit_event( uint8_t c ) {
 	textedit_skip_screen_refresh:
 
 	// Refresh status line
-	textedit_status_refresh( c );
+	textedit_status_refresh( );
 
 	// Refresh cursor
 	textedit_cursor_refresh( );
@@ -930,12 +1007,10 @@ void textedit_screen_refresh( void ) {
 }
 
 // Refresh status line
-void textedit_status_refresh( uint8_t c ) {
+void textedit_status_refresh( void ) {
 	char saved, *state;
 	static char inverse[] = "INVSE";
 	static char normal[] = "NORML";
-
-	TEXTEDIT_UNUSED( c );
 
 	if ( textedit_filename == NULL ) {
 		ed_fatal_error( "EMPTY FILENAME" );

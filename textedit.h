@@ -57,6 +57,7 @@
 
 // UI related defines
 #define TEXTEDIT_UI_WAIT_TIME		1				// Wait duration for temporary UI events
+#define TEXTEDIT_SCREENSAVER_TO		300000			// Screensaver timeout (2500 = 1 second)
 #define TEXTEDIT_UI_YES_ANSWER		'y'				// Character for the YES answer
 #define TEXTEDIT_UI_NO_ANSWER		'n'				// Character for the NO answer
 #define TEXTEDIT_UI_CA_ANSWER		'c'				// Character for the CANCEL answer
@@ -70,6 +71,8 @@ extern uint16_t						textedit_lpntr;	// Current line position in the scrolled te
 extern uint8_t 						textedit_cur_x;	// Horizontal cursor position on the screen. First col is 0.
 extern char							textedit_status[LIBSCREEN_NB_COLS+1];
 													// Status line buffer
+extern uint32_t 					textedit_sc_counter;
+													// Screen saver counter
 
 // Function prototypes
 void 	textedit_init			( char*, char* );
@@ -80,7 +83,8 @@ void 	textedit_mem_full		( void );
 void 	textedit_update_nonce	( void );
 void 	textedit_event			( uint8_t );
 void 	textedit_screen_refresh	( void );
-void	textedit_status_refresh	( uint8_t );
+void	textedit_status_refresh	( void );
 void	textedit_cursor_refresh	( void );
+void 	textedit_screensaver	( void );
 
 #endif /* __TEXTEDIT_H__ */

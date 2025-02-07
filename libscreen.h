@@ -12,6 +12,8 @@
 
 #define LIBSCREEN_SPACE						32		// ASCII code for space char
 #define LIBSCREEN_COPYRIGHT					96		// ASCII code for copyright
+#define LIBSCREEN_GRAY						126		// ASCII code for gray pattern
+#define LIBSCREEN_PLAIN						127		// ASCII code for plain pattern
 
 #define LIBSCREEN_INVERT_BIT				0x80	// Bit controlling ink/paper color inversion
 
@@ -45,5 +47,6 @@ void libscreen_clearline( uint8_t, uint8_t );
 void libscreen_copyline( uint8_t, uint8_t* );
 void libscreen_copyline_inv( uint8_t, uint8_t* );
 void libscreen_display( uint16_t, uint8_t** );
+void libscreen_scroll_down( void );
 
 #endif /* __LIBSCREEN_H__ */

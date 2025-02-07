@@ -32,11 +32,12 @@ bool			textedit_ret_flag = false;
 char*			textedit_filename = NULL;
 char*			textedit_password = NULL;
 uint32_t 		textedit_sc_counter;
+bool			textedit_sc_enable = true;
 
 // Screen saver
 void textedit_screensaver( void ) {
 	static bool 	init_flag = false;
-	static bool		leader_flag = false;
+	static bool		leader_flag[LIBSCREEN_NB_COLS];
 	static uint8_t	col_on[LIBSCREEN_NB_COLS];
 	static uint8_t	col_off[LIBSCREEN_NB_COLS];
 	uint16_t		i;
@@ -53,6 +54,7 @@ void textedit_screensaver( void ) {
 			for ( i = 1; i < LIBSCREEN_NB_COLS; i++ ) {
 				col_on[i] = (uint8_t)( rand( ) % LIBSCREEN_NB_LINES );
 				col_off[i] = (uint8_t)( rand( ) % LIBSCREEN_NB_LINES );
+				leader_flag[i] = false;
 			}
 
 			init_flag = false;
@@ -65,7 +67,7 @@ void textedit_screensaver( void ) {
 				col_on[i]--;
 				libscreen_textbuf[i] = LIBSCREEN_SPACE;
 				if ( col_on[i] == 0 ) {
-					leader_flag = true;
+					leader_flag[i] = true;
 				}
 			}
 			else {
@@ -73,8 +75,8 @@ void textedit_screensaver( void ) {
 					col_off[i]--;
 					// The magic occurs here
 					libscreen_textbuf[i] = '!' + ( rand() % 94 );
-					if ( leader_flag ) {
-						leader_flag = false;
+					if ( leader_flag[i] ) {
+						leader_flag[i] = false;
 						libscreen_textbuf[i] = LIBSCREEN_PLAIN;
 					}
 				}
@@ -264,6 +266,17 @@ void textedit_event( uint8_t c ) {
 	register uint8_t 	i;
 
 	switch ( c ) {
+		// Toggle the screensaver flag
+		case TEXTEDIT_CTRL_N:
+			textedit_sc_enable = !textedit_sc_enable;
+			if ( textedit_sc_enable ) {
+				textedit_status_popup( "SCREENSAVER ENABLED" );
+			}
+			else {
+				textedit_status_popup( "SCREENSAVER DISABLED" );
+			}
+		break;
+
 		// Toggle the inverted flag
 		case TEXTEDIT_CTRL_O:
 		textedit_inverted_flag = !textedit_inverted_flag;

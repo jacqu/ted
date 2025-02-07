@@ -205,16 +205,18 @@ int main( void ) {
 
 	// Main event loop
 	while ( 1 ) {
-		textedit_sc_counter = TEXTEDIT_SCREENSAVER_TO;
-		while ( !kbhit() ) {
-			textedit_screensaver( );
-		}
-		if ( !textedit_sc_counter ) {
-			textedit_screen_refresh( );
-			textedit_status_refresh( );
-			textedit_cursor_refresh( );
-			cgetc( );
-			continue;
+		if ( textedit_sc_enable ) {
+			textedit_sc_counter = TEXTEDIT_SCREENSAVER_TO;
+			while ( !kbhit() ) {
+				textedit_screensaver( );
+			}
+			if ( !textedit_sc_counter ) {
+				textedit_screen_refresh( );
+				textedit_status_refresh( );
+				textedit_cursor_refresh( );
+				cgetc( );
+				continue;
+			}
 		}
 		textedit_event( cgetc( ) );
 	}

@@ -27,7 +27,7 @@
 #define TEXTEDIT_CTRL_K				11		// UP
 #define TEXTEDIT_CTRL_L				12
 #define TEXTEDIT_CTRL_M				13		// RET
-#define TEXTEDIT_CTRL_N				14
+#define TEXTEDIT_CTRL_N				14		// Disable screensaver
 #define TEXTEDIT_CTRL_O				15		// INVERT
 #define TEXTEDIT_CTRL_P				16		// PRINT
 #define TEXTEDIT_CTRL_Q				17		// WHITE INK
@@ -57,7 +57,7 @@
 
 // UI related defines
 #define TEXTEDIT_UI_WAIT_TIME		1				// Wait duration for temporary UI events
-#define TEXTEDIT_SCREENSAVER_TO		300000			// Screensaver timeout (2500 = 1 second)
+#define TEXTEDIT_SCREENSAVER_TO		3000			// Screensaver timeout (2500 = 1 second)
 #define TEXTEDIT_UI_YES_ANSWER		'y'				// Character for the YES answer
 #define TEXTEDIT_UI_NO_ANSWER		'n'				// Character for the NO answer
 #define TEXTEDIT_UI_CA_ANSWER		'c'				// Character for the CANCEL answer
@@ -73,6 +73,8 @@ extern char							textedit_status[LIBSCREEN_NB_COLS+1];
 													// Status line buffer
 extern uint32_t 					textedit_sc_counter;
 													// Screen saver counter
+extern bool							textedit_sc_enable;
+													// Screen saver flag
 
 // Function prototypes
 void 	textedit_init			( char*, char* );

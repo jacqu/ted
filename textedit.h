@@ -57,7 +57,7 @@
 
 // UI related defines
 #define TEXTEDIT_UI_WAIT_TIME		1				// Wait duration for temporary UI events
-#define TEXTEDIT_SCREENSAVER_TO		3000			// Screensaver timeout (2500 = 1 second)
+#define TEXTEDIT_SCREENSAVER_TO		300000			// Screensaver timeout (2500 = 1 second)
 #define TEXTEDIT_UI_YES_ANSWER		'y'				// Character for the YES answer
 #define TEXTEDIT_UI_NO_ANSWER		'n'				// Character for the NO answer
 #define TEXTEDIT_UI_CA_ANSWER		'c'				// Character for the CANCEL answer

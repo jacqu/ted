@@ -311,18 +311,18 @@ void textedit_event( uint8_t c ) {
 					"%s", 				  "          U S E R    G U I D E          " );
 		libscreen_copyline_inv( 0, 	(uint8_t*)textedit_status );
 
-		libscreen_copyline( 4, 	(uint8_t*)"[CTRL]-S: SAVE      [CTRL]-C: COPY  LINE" );
-		libscreen_copyline( 6, 	(uint8_t*)"[CTRL]-X: CUT LINE  [CTRL]-V: PASTE LINE" );
+		libscreen_copyline( 3, 	(uint8_t*)"[CTRL]-S: SAVE      [CTRL]-C: COPY  LINE" );
+		libscreen_copyline( 5, 	(uint8_t*)"[CTRL]-X: CUT LINE  [CTRL]-V: PASTE LINE" );
 
-		libscreen_copyline( 10, (uint8_t*)"[CTRL]-Q: WHITE INK [CTRL]-W: RED   INK " );
-		libscreen_copyline( 12, (uint8_t*)"[CTRL]-E: GREEN INK [CTRL]-R: BLUE  INK " );
-		libscreen_copyline( 14, (uint8_t*)"[CTRL]-T: BLACK INK [CTRL]-Y: BLACK PAP " );
-		libscreen_copyline( 16, (uint8_t*)"[CTRL]-U: RED   PAP [CTRL]-A: YELL  PAP " );
-		libscreen_copyline( 18, (uint8_t*)"[CTRL]-D: BLUE  PAP [CTRL]-O: INVERT    " );
+		libscreen_copyline( 9,  (uint8_t*)"[CTRL]-Q: WHITE INK [CTRL]-W: RED   INK " );
+		libscreen_copyline( 11, (uint8_t*)"[CTRL]-E: GREEN INK [CTRL]-R: BLUE  INK " );
+		libscreen_copyline( 13, (uint8_t*)"[CTRL]-T: BLACK INK [CTRL]-Y: BLACK PAP " );
+		libscreen_copyline( 15, (uint8_t*)"[CTRL]-U: RED   PAP [CTRL]-A: YELL  PAP " );
+		libscreen_copyline( 17, (uint8_t*)"[CTRL]-D: BLUE  PAP [CTRL]-O: INVERT    " );
 
-		libscreen_copyline( 22, (uint8_t*)"[CTRL]-F: PAGE UP   [CTRL]-B: PAGE DOWN " );
-		libscreen_copyline( 24, (uint8_t*)"[CTRL]-P: PRINT     [ESC]:    QUIT      " );
-		libscreen_copyline( 26, (uint8_t*)"[CTRL]-Z: SOFT TAB  [CTRL]-N: SVR ON/OFF" );
+		libscreen_copyline( 21, (uint8_t*)"[CTRL]-F: PAGE UP   [CTRL]-B: PAGE DOWN " );
+		libscreen_copyline( 23, (uint8_t*)"[CTRL]-P: PRINT     [ESC]:    QUIT      " );
+		libscreen_copyline( 25, (uint8_t*)"[CTRL]-Z: SOFT TAB  [CTRL]-N: SVR ON/OFF" );
 
 		libscreen_copyline_inv( 
 							27, (uint8_t*)"                       (c) SYNTAXIC 2025" );

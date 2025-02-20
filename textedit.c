@@ -34,6 +34,20 @@ char*			textedit_password = NULL;
 uint32_t 		textedit_sc_counter;
 bool			textedit_sc_enable = true;
 
+// Exit cleanly
+void textedit_exit( void ) {
+
+	// Clear text in memory
+	memset( &textstore, 0, textstore_sizeof( ) );
+
+	// Clear screen including the status bar
+	liboric_basic( "HIRES" );
+	liboric_basic( "TEXT" );
+
+	// Exit without error
+	exit ( ED_NO_ERROR );
+}
+
 // Screen saver
 void textedit_screensaver( void ) {
 	static bool 	init_flag = false;
@@ -266,6 +280,13 @@ void textedit_event( uint8_t c ) {
 	register uint8_t 	i;
 
 	switch ( c ) {
+		// Insert soft TAB
+		case TEXTEDIT_CTRL_Z:
+			for ( i = TEXTEDIT_TABSZ - ( textedit_cur_x % TEXTEDIT_TABSZ ); i > 0; i-- ) {
+				textedit_event( LIBSCREEN_SPACE );
+			}
+		break;
+
 		// Toggle the screensaver flag
 		case TEXTEDIT_CTRL_N:
 			textedit_sc_enable = !textedit_sc_enable;
@@ -301,6 +322,7 @@ void textedit_event( uint8_t c ) {
 
 		libscreen_copyline( 22, (uint8_t*)"[CTRL]-F: PAGE UP   [CTRL]-B: PAGE DOWN " );
 		libscreen_copyline( 24, (uint8_t*)"[CTRL]-P: PRINT     [ESC]:    QUIT      " );
+		libscreen_copyline( 26, (uint8_t*)"[CTRL]-Z: SOFT TAB  [CTRL]-N: SVR ON/OFF" );
 
 		libscreen_copyline_inv( 
 							27, (uint8_t*)"                       (c) SYNTAXIC 2025" );
@@ -440,22 +462,19 @@ void textedit_event( uint8_t c ) {
 		if ( !textedit_saved_flag ) {
 			i = textedit_status_YN( "QUIT WITHOUT SAVING?" );
 			if (  i == true ) {
-				liboric_basic( "RESET" );
-				exit ( ED_NO_ERROR );
+				textedit_exit( );
 			}
 			else {
 				if ( i == TEXTEDIT_CANCEL )
 					break;
 				textedit_event( TEXTEDIT_CTRL_S );
 				if ( textedit_saved_flag ) {
-					liboric_basic( "RESET" );
-					exit ( ED_NO_ERROR );
+					textedit_exit( );
 				}
 			}
 		}
 		else {
-			liboric_basic( "RESET" );
-			exit ( ED_NO_ERROR );
+			textedit_exit( );
 		}
 		break;
 

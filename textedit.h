@@ -27,7 +27,7 @@
 #define TEXTEDIT_CTRL_K				11		// UP
 #define TEXTEDIT_CTRL_L				12
 #define TEXTEDIT_CTRL_M				13		// RET
-#define TEXTEDIT_CTRL_N				14		// Disable screensaver
+#define TEXTEDIT_CTRL_N				14		// SCREEN SAVER ON/OFF
 #define TEXTEDIT_CTRL_O				15		// INVERT
 #define TEXTEDIT_CTRL_P				16		// PRINT
 #define TEXTEDIT_CTRL_Q				17		// WHITE INK
@@ -39,7 +39,7 @@
 #define TEXTEDIT_CTRL_W				23		// RED INK
 #define TEXTEDIT_CTRL_X				24		// CUT
 #define TEXTEDIT_CTRL_Y				25		// BLACK PAPER
-#define TEXTEDIT_CTRL_Z				26
+#define TEXTEDIT_CTRL_Z				26		// TAB
 
 #define TEXTEDIT_ASCII_MIN			32
 #define TEXTEDIT_ASCII_MAX			126
@@ -64,6 +64,7 @@
 
 // Misc
 #define TEXTEDIT_CANCEL				2				// Cancel return code
+#define TEXTEDIT_TABSZ				4				// Tab size
 
 // Globals
 extern uint8_t 						textedit_cur_y;	// Vertical cursor position on the screen. First line is 0.
@@ -77,6 +78,7 @@ extern bool							textedit_sc_enable;
 													// Screen saver flag
 
 // Function prototypes
+void 	textedit_exit			( void );
 void 	textedit_init			( char*, char* );
 void 	textedit_status_print	( char* );
 void 	textedit_status_popup	( char* );

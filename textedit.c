@@ -40,6 +40,11 @@ void textedit_exit( void ) {
 	// Clear text in memory
 	memset( &textstore, 0, textstore_sizeof( ) );
 
+	// Clear password if needed
+	if ( textedit_password ) {
+		memset( textedit_password, 0, ED_PW_MAX_LENGTH );
+	}
+
 	// Clear screen including the status bar
 	liboric_basic( "HIRES" );
 	liboric_basic( "TEXT" );

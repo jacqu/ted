@@ -14,12 +14,13 @@ INIT       = 'CLS:PRINT CHR$$(20):TED'
 START      = 1536
 SYMBOLS    = sym
 
-GIT_VER    = "$(shell date '+%y.%m.%d.%H')"
+MAJOR_VER  = 1.0
+VERSION    = "$(MAJOR_VER).$(shell date '+%y%m%d%H')"
 
 CC65       ?= $(CC65_HOME)/bin/cc65
 CA65       ?= $(CC65_HOME)/bin/ca65
 LD65       ?= $(CC65_HOME)/bin/ld65
-CFLAGS     = -DTED_VERSION=\"$(GIT_VER)\" -D__ATMOS__ --standard cc65 -DSTART_ADDRESS=$(START) -Oirs --codesize 500 -T -g -t atmos
+CFLAGS     = -DTED_VERSION=\"$(VERSION)\" -D__ATMOS__ --standard cc65 -DSTART_ADDRESS=$(START) -Oirs --codesize 500 -T -g -t atmos
 CAFLAGS    = -g
 LDFLAGS    = -C ./atmos_ted.cfg -L$(CC65_HOME)/lib $(CC65_HOME)/lib/atmos.lib -D__START_ADDRESS__=$(START) -Ln $(SYMBOLS)
 RM         = /bin/rm -f

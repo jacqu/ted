@@ -742,15 +742,14 @@ void textedit_event( uint8_t c ) {
 			//i = textedit_right_adjust( textedit_lpntr );
 			// Decrement line pointer
 			textedit_lpntr--;
-			// Delete last character from the previous line if it is full
-			//if ( ( textstore.lsize[textedit_lpntr] == TEXTSTORE_LINE_SIZE ) && ( !i ) ) {
+			// Delete last character from the previous line if it is not empty
+			if ( textstore.lsize[textedit_lpntr] ) {
 				textstore_del_char( textedit_lpntr, textstore.lsize[textedit_lpntr] - 1 );
-			//}
+			}
 			// Update x cursor
 			textedit_cur_x = textstore.lsize[textedit_lpntr];
 			// Fill the gaps at the right
-			i = textedit_right_adjust( textedit_lpntr + 1 );
-			
+			textedit_right_adjust( textedit_lpntr + 1 );
 			// Update y cursor position
 			if ( textedit_cur_y > TEXTEDIT_EDITORSCR_BASE  ) {
 				textedit_cur_y--;

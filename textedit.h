@@ -85,6 +85,7 @@ void 	textedit_status_popup	( char* );
 uint8_t	textedit_status_YN		( char* );
 void 	textedit_mem_full		( void );
 void 	textedit_update_nonce	( void );
+uint8_t textedit_right_adjust	( uint16_t );
 void 	textedit_event			( uint8_t );
 void 	textedit_screen_refresh	( void );
 void	textedit_status_refresh	( void );

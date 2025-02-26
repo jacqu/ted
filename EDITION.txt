@@ -1,0 +1,30 @@
+=== Character insertion ===
+
+* IF line is not full
+	* IF line contains only one free character
+		* IF cursor is at the end of the line
+			* IF character is SPACE
+				* Insert character at the end of the line
+				* IF current line is the last line
+					* Insert a new line after the current one
+				* Set the cursor position at the beginning of the next line
+			* IF character is not SPACE
+				* Insert a new line after the current one
+				* Move the last word to the next line
+				* Insert the character at end of the last word
+				* Set the cursor position at the end of the next line
+				* Run the alignement routine
+		* IF cursor is not at the end of the line
+			* IF last character is space
+				* Insert character at the current cursor position
+				* Move cursor position one step at the right
+			* IF last character is not space
+				* Insert a new line after the current one
+				* Move last word to next line
+				* Insert the character at the current cursor position
+				* Increment cursor position
+				* Run the alignement routine
+	* Line contains more than one free character
+		* Insert character at the current cursor position
+		* Increment cursor position
+* Line is full

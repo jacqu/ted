@@ -742,14 +742,14 @@ void textedit_event( uint8_t c ) {
 			//i = textedit_right_adjust( textedit_lpntr );
 			// Decrement line pointer
 			textedit_lpntr--;
-			// Delete last character from the previous line if it is not empty
-			if ( textstore.lsize[textedit_lpntr] ) {
+			// Delete last space character from the previous line if it is not empty
+			if ( textstore.lsize[textedit_lpntr] && ( textstore.tlpt[textedit_lpntr][textstore.lsize[textedit_lpntr]-1] == LIBSCREEN_SPACE ) ) {
 				textstore_del_char( textedit_lpntr, textstore.lsize[textedit_lpntr] - 1 );
 			}
-			// Update x cursor
-			textedit_cur_x = textstore.lsize[textedit_lpntr];
 			// Fill the gaps at the right
 			textedit_right_adjust( textedit_lpntr + 1 );
+			// Update x cursor
+			textedit_cur_x = textstore.lsize[textedit_lpntr];
 			// Update y cursor position
 			if ( textedit_cur_y > TEXTEDIT_EDITORSCR_BASE  ) {
 				textedit_cur_y--;
@@ -922,51 +922,58 @@ void textedit_event( uint8_t c ) {
 		// At least one character free in the line
 		//
 		if ( textstore.lsize[textedit_lpntr] < TEXTSTORE_LINE_SIZE ) {
-			// Update saved flag
-			textedit_saved_flag = false;
-			// Insert character
-			textstore_insert_char( textedit_lpntr, textedit_cur_x, c );
-			// Refresh current line
-			libscreen_copyline( textedit_cur_y, textstore.tlpt[textedit_lpntr] );
-			// Update cursor position
-			textedit_cur_x++;
-			// Check if cursor reached end of line
-			if ( textedit_cur_x >= TEXTSTORE_LINE_SIZE ) {
-				// IF on the last line
-				// OR
-				// IF next line is blank
-				// THEN
-				// Insert line
-				if ( 	( textedit_lpntr == textstore.nblines - 1 ) ||
-						( textstore.lsize[textedit_lpntr+1] == 0 ) ) {
-					// Line available ?
-					if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
-						textedit_mem_full( );
-						textedit_cur_x--;
-						break;
-					}
-					// Insert a new line after the current line
-					if ( textstore_insert_line( textedit_lpntr + 1 ) ) {
-						ed_fatal_error( "INSERTING NEW LINE AFTER EOL" );
-					}
-				}
-				// Increment line pointer
-				textedit_lpntr++;
-				// Update vertical cursor position
-				if ( textedit_cur_y < TEXTEDIT_EDITORSCR_LAST ) {
-					textedit_cur_y++;
-				}
-				else {
-					textedit_spntr++;
-				}
-				// Carriage return of the cursor
-				textedit_cur_x = 0;
-				// Toggle the return flag
-				textedit_ret_flag = true;
-				// Since cursor changes line, refresh whole screen
-				break;
+			// Check if the last character of the line is entered
+			if ( textstore.lsize[textedit_lpntr] == TEXTSTORE_LINE_SIZE - 1 ) {
+				// Check if 
+
 			}
-			goto textedit_skip_screen_refresh;
+			else {
+				// Update saved flag
+				textedit_saved_flag = false;
+				// Insert character
+				textstore_insert_char( textedit_lpntr, textedit_cur_x, c );
+				// Refresh current line
+				libscreen_copyline( textedit_cur_y, textstore.tlpt[textedit_lpntr] );
+				// Update cursor position
+				textedit_cur_x++;
+				// Check if cursor reached end of line
+				if ( textedit_cur_x >= TEXTSTORE_LINE_SIZE ) {
+					// IF on the last line
+					// OR
+					// IF next line is blank
+					// THEN
+					// Insert line
+					if ( 	( textedit_lpntr == textstore.nblines - 1 ) ||
+							( textstore.lsize[textedit_lpntr+1] == 0 ) ) {
+						// Line available ?
+						if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
+							textedit_mem_full( );
+							textedit_cur_x--;
+							break;
+						}
+						// Insert a new line after the current line
+						if ( textstore_insert_line( textedit_lpntr + 1 ) ) {
+							ed_fatal_error( "INSERTING NEW LINE AFTER EOL" );
+						}
+					}
+					// Increment line pointer
+					textedit_lpntr++;
+					// Update vertical cursor position
+					if ( textedit_cur_y < TEXTEDIT_EDITORSCR_LAST ) {
+						textedit_cur_y++;
+					}
+					else {
+						textedit_spntr++;
+					}
+					// Carriage return of the cursor
+					textedit_cur_x = 0;
+					// Toggle the return flag
+					textedit_ret_flag = true;
+					// Since cursor changes line, refresh whole screen
+					break;
+				}
+				goto textedit_skip_screen_refresh;
+			}
 		}
 		//
 		// No character left in the line

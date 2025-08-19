@@ -22,6 +22,6 @@
 #define ED_NO_ERROR				0
 
 // Primitives of public functions
-void ed_fatal_error( char* );
+void ed_fatal_error( char*, uint32_t );
 
 #endif /* __ED_H__ */

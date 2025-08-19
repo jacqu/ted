@@ -30,8 +30,8 @@ uint16_t 	*ed_timer_a = (uint16_t*)ED_TIMER_ADDRESS;
 uint16_t 	ed_timer = 0;
 
 // Fatal error exit
-void ed_fatal_error( char* msg ) {
-	fprintf( stderr, "ERROR: %s\n", msg );
+void ed_fatal_error( char* msg, uint32_t line ) {
+	fprintf( stderr, "PANIC: %s:%lu\n", msg, (unsigned long)line );
 	exit( ED_FATAL_ERROR );
 }
 

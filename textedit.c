@@ -138,7 +138,7 @@ void textedit_init( char* filename, char* password ) {
 	// Sanity check
 	#ifdef ED_DEBUG
 	if ( !filename ) {
-		ed_fatal_error( "NO FILENAME PROVIDED" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	#endif
 	textedit_filename = filename;
@@ -170,7 +170,7 @@ void textedit_init( char* filename, char* password ) {
 
 		// Check file validity
 		if ( textstore.magic != TEXTSTORE_MAGIC ) {
-			ed_fatal_error( "INVALID PASSWORD" );
+			ed_fatal_error( __FILE__, __LINE__ );
 		}
 		break;
 		
@@ -180,12 +180,12 @@ void textedit_init( char* filename, char* password ) {
 
 		// Allocate first line of text
 		if ( textstore_insert_line( TEXTEDIT_TEXT_BASE ) ) {
-			ed_fatal_error( "UNABLE TO ALLOCATE FIRST LINE" );
+			ed_fatal_error( __FILE__, __LINE__ );
 		}
 		break;
 
 		default:
-		ed_fatal_error( "LOADING FILE" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 
 	// Clear screen
@@ -536,7 +536,7 @@ void textedit_event( uint8_t c ) {
 		}
 		// Insert a new line
 		if ( textstore_insert_line( textedit_lpntr ) ) {
-			ed_fatal_error( "PASTING NEW LINE" );
+			ed_fatal_error( __FILE__, __LINE__ );
 		}
 		// Paste buffer to the new line
 		textstore_write_chars( textedit_lpntr, 0, textedit_copy_buf, textedit_copy_buf_sz );
@@ -728,7 +728,7 @@ void textedit_event( uint8_t c ) {
 		}
 		// Insert a new line
 		if ( textstore_insert_line( ++textedit_lpntr ) ) {
-			ed_fatal_error( "INSERTING NEW LINE AFTER RET" );
+			ed_fatal_error( __FILE__, __LINE__ );
 		}
 		// Cursor before the end of the line ?
 		if ( textedit_cur_x < textstore.lsize[textedit_lpntr-1] ) {
@@ -756,7 +756,7 @@ void textedit_event( uint8_t c ) {
 		break;
 
 		default:
-		// Convert pound char into plain char
+		// Replace pound char with plain char
 		if ( c == TEXTEDIT_KEY_POUND ) {
 			c = LIBSCREEN_PLAIN_CHAR;
 		}
@@ -820,7 +820,7 @@ void textedit_event( uint8_t c ) {
 			// Sanity check
 			#ifdef ED_DEBUG
 			if ( ( textedit_lpntr == 0 ) || ( textstore.lsize[textedit_lpntr-1] != TEXTSTORE_LINE_SIZE ) ) {
-				ed_fatal_error( "WHILE WRAPPING" );
+				ed_fatal_error( __FILE__, __LINE__ );
 			}
 			#endif
 			// Scan backward for a space character in the previous line
@@ -841,7 +841,7 @@ void textedit_event( uint8_t c ) {
 					}
 					// Insert a new line at the current line
 					if ( textstore_insert_line( textedit_lpntr ) ) {
-						ed_fatal_error( "INSERTING NEW LINE AFTER EOL" );
+						ed_fatal_error( __FILE__, __LINE__ );
 					}
 				}
 				// Copy last word of last line to this line
@@ -897,7 +897,7 @@ void textedit_event( uint8_t c ) {
 					}
 					// Insert a new line after the current line
 					if ( textstore_insert_line( textedit_lpntr + 1 ) ) {
-						ed_fatal_error( "INSERTING NEW LINE AFTER EOL" );
+						ed_fatal_error( __FILE__, __LINE__ );
 					}
 				}
 				// Increment line pointer
@@ -954,7 +954,7 @@ void textedit_event( uint8_t c ) {
 				}
 				// Insert a new line after the current line
 				if ( textstore_insert_line( textedit_lpntr + 1 ) ) {
-					ed_fatal_error( "INSERTING NEW LINE AFTER EOL" );
+					ed_fatal_error( __FILE__, __LINE__ );
 				}
 			}
 
@@ -1050,7 +1050,7 @@ void textedit_status_refresh( void ) {
 	static char normal[] = "NORML";
 
 	if ( textedit_filename == NULL ) {
-		ed_fatal_error( "EMPTY FILENAME" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 
 	if ( textedit_saved_flag ) {

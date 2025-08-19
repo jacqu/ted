@@ -78,7 +78,7 @@ uint8_t textstore_insert_line( uint16_t line_nb ) {
 	// Sanity check
 	#ifdef ED_DEBUG
 	if ( line_nb > textstore.nblines ) {
-		ed_fatal_error( "INSERTION BEYOND END OF TEXT" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	#endif
 
@@ -120,7 +120,7 @@ void textstore_del_line( uint16_t line_nb ) {
 	// Sanity check
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
-		ed_fatal_error( "DELETION BEYOND END OF TEXT" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	#endif
 
@@ -130,7 +130,7 @@ void textstore_del_line( uint16_t line_nb ) {
 	// Sanity check
 	#ifdef ED_DEBUG
 	if ( textstore.ptflag[i] == TEXTSTORE_LINEPT_FREE ) {
-		ed_fatal_error( "REMOVING FREE POINTER" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	#endif
 
@@ -154,10 +154,10 @@ void textstore_insert_char( uint16_t line_nb, uint8_t char_nb, uint8_t char_c ) 
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
-		ed_fatal_error( "INSERT CHAR BEYOND END OF TEXT" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	if ( char_nb > textstore.lsize[line_nb] ) {
-		ed_fatal_error( "INSERT CHAR BEYOND END OF LINE" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	#endif
 
@@ -183,10 +183,10 @@ void textstore_del_char( uint16_t line_nb, uint8_t char_nb ) {
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
-		ed_fatal_error( "DEL CHAR BEYOND END OF TEXT" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	if ( char_nb >= textstore.lsize[line_nb] ) {
-		ed_fatal_error( "DEL CHAR BEYOND END OF LINE" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	#endif
 
@@ -210,10 +210,10 @@ void textstore_insert_chars( uint16_t line_nb, uint8_t char_nb, uint8_t *chars, 
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
-		ed_fatal_error( "INSERT CHARS BEYOND END OF TEXT" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	if ( char_nb > textstore.lsize[line_nb] ) {
-		ed_fatal_error( "INSERT CHARS BEYOND END OF LINE" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	#endif
 
@@ -244,10 +244,10 @@ void textstore_del_chars( uint16_t line_nb, uint8_t char_nb, uint8_t chars_nb ) 
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
-		ed_fatal_error( "DEL CHARS BEYOND END OF TEXT" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	if ( char_nb >= textstore.lsize[line_nb] ) {
-		ed_fatal_error( "DEL CHARS BEYOND END OF LINE" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	#endif
 
@@ -273,10 +273,10 @@ void textstore_write_chars( uint16_t line_nb, uint8_t char_nb, uint8_t *chars, u
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
-		ed_fatal_error( "WRITE CHARS BEYOND END OF TEXT" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	if ( char_nb >= TEXTSTORE_LINE_SIZE ) {
-		ed_fatal_error( "WRITE CHARS BEYOND END OF LINE" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	#endif
 
@@ -417,4 +417,56 @@ void textstore_print ( uint8_t type ) {
 	textstore_color_mcp40( type, TEXTSTORE_MCP40_BLACK );
 	liboric_basic( TEXTSTORE_LPRINT_LFCR );
 	liboric_basic( TEXTSTORE_LPRINT_LFCR );
+}
+
+// Move first word of line n at the end of line n-1
+// Returns the number of words that have been moved
+uint8_t textstore_move_first_word_up( uint16_t line_nb ) {
+	uint8_t i;
+	
+	// Sanity checks
+	#ifdef ED_DEBUG
+	if ( ( line_nb >= textstore.nblines ) || ( line_nb == 0 ) ) {
+		ed_fatal_error( __FILE__, __LINE__ );
+	}
+	#endif
+
+	// Find the next word boundary of line n starting from the left
+	for ( i = 0; i < textstore.lsize[line_nb]; i++ ) {
+		if ( textstore.tlpt[line_nb][i] == TEXTSTORE_CHAR_SPACE ) {
+			// Include space at the end of the word
+			i++;
+			break;
+		}
+	}
+
+	// Check if the word fits into line n-1
+	if ( i <= TEXTSTORE_LINE_SIZE - textstore.lsize[line_nb-1] ) {
+		// Copy first word of current line at the end of previous line
+		// Note that a single space at the begining of a line is considered as a word
+		textstore_insert_chars( line_nb - 1, 
+								textstore.lsize[line_nb-1], 
+								textstore.tlpt[line_nb], 
+								i );
+		// Delete the word on the current line that moved to the previous line
+		textstore_del_chars( 	line_nb, 
+								0, 
+								i );
+		return true;
+	}
+
+	return false;
+}
+
+// Move last word of line n to the begining of line n+1
+uint8_t textstore_move_last_word_down( uint16_t line_nb ) {
+
+	// Sanity checks
+	#ifdef ED_DEBUG
+	if ( line_nb + 1 >= textstore.nblines ) {
+		ed_fatal_error( __FILE__, __LINE__ );
+	}
+	#endif
+
+	return false;
 }

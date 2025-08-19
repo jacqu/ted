@@ -32,7 +32,7 @@ void libscreen_clearline( uint8_t line, uint8_t c ) {
 	// Check if line is valid
 	#ifdef ED_DEBUG
 	if ( line >= LIBSCREEN_NB_LINES ) {
-		ed_fatal_error( "INVALID LINE NUMBER IN CLEARLINE" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	#endif
 
@@ -48,7 +48,7 @@ void libscreen_copyline( uint8_t line, uint8_t *b ) {
 	// Check if line is valid
 	#ifdef ED_DEBUG
 	if ( line >= LIBSCREEN_NB_LINES ) {
-		ed_fatal_error( "INVALID LINE NUMBER IN COPYLINE" );
+		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	#endif
 	

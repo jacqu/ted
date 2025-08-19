@@ -14,6 +14,7 @@
 													// Magic Number
 
 #define TEXTSTORE_CHAR_SPACE			32			// Space character
+#define TEXTSTORE_CHAR_RET				95			// CRLF character
 
 #define TEXTSTORE_LINEPT_FREE			1			// Line pointer is available
 #define TEXTSTORE_LINEPT_USED			0			// Line pointer is used
@@ -58,18 +59,19 @@ struct textstore_struct {
 
 extern struct 	textstore_struct textstore;
 
-void 		textstore_init			( void );
-void 		textstore_fix_pointers	( void );
-uint8_t 	textstore_insert_line	( uint16_t );
-void 		textstore_del_line		( uint16_t );
-void		textstore_insert_char	( uint16_t, uint8_t, uint8_t );
-void 		textstore_del_char		( uint16_t, uint8_t );
-void		textstore_insert_chars	( uint16_t, uint8_t, uint8_t*, uint8_t );
-void 		textstore_del_chars		( uint16_t, uint8_t, uint8_t );
-void 		textstore_write_chars	( uint16_t, uint8_t, uint8_t*, uint8_t );
-uint16_t	textstore_sizeof		( void );
-void 		textstore_color_mcp40	( uint8_t, uint8_t );
-void		textstore_print			( uint8_t );
-
+void 		textstore_init					( void );
+void 		textstore_fix_pointers			( void );
+uint8_t 	textstore_insert_line			( uint16_t );
+void 		textstore_del_line				( uint16_t );
+void		textstore_insert_char			( uint16_t, uint8_t, uint8_t );
+void 		textstore_del_char				( uint16_t, uint8_t );
+void		textstore_insert_chars			( uint16_t, uint8_t, uint8_t*, uint8_t );
+void 		textstore_del_chars				( uint16_t, uint8_t, uint8_t );
+void 		textstore_write_chars			( uint16_t, uint8_t, uint8_t*, uint8_t );
+uint16_t	textstore_sizeof				( void );
+void 		textstore_color_mcp40			( uint8_t, uint8_t );
+void		textstore_print					( uint8_t );
+uint8_t 	textstore_move_first_word_up	( uint16_t );
+uint8_t 	textstore_move_last_word_down	( uint16_t );
 
 #endif /* __TEXTSTORE_H__ */

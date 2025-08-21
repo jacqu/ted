@@ -419,10 +419,11 @@ void textstore_print ( uint8_t type ) {
 	liboric_basic( TEXTSTORE_LPRINT_LFCR );
 }
 
-// Move first word of line n at the end of line n-1
-// Returns the number of words that have been moved
-uint8_t textstore_move_first_word_up( uint16_t line_nb ) {
-	uint8_t i;
+// Move as many words as possible from the beginning of line n to the end of line n-1
+// If line n becomes empty, delete line n
+// Returns the number of chars that have been moved
+uint8_t textstore_move_first_words_up( uint16_t line_nb ) {
+	int8_t i;
 	
 	// Sanity checks
 	#ifdef ED_DEBUG
@@ -431,42 +432,97 @@ uint8_t textstore_move_first_word_up( uint16_t line_nb ) {
 	}
 	#endif
 
-	// Find the next word boundary of line n starting from the left
-	for ( i = 0; i < textstore.lsize[line_nb]; i++ ) {
+	// Find the next word boundary of line n starting from the right
+	for ( i = textstore.lsize[line_nb] - 1; i >= 0; i-- ) {
 		if ( textstore.tlpt[line_nb][i] == TEXTSTORE_CHAR_SPACE ) {
-			// Include space at the end of the word
-			i++;
-			break;
+			// Check if this group of words fit at the end of previous line
+			if ( i + 1 <= TEXTSTORE_LINE_SIZE - textstore.lsize[line_nb-1] ) {
+				// It fits, increment i so that it contains the length of the group of words
+				i++;
+				break;
+			}
 		}
 	}
 
-	// Check if the word fits into line n-1
-	if ( i <= TEXTSTORE_LINE_SIZE - textstore.lsize[line_nb-1] ) {
-		// Copy first word of current line at the end of previous line
-		// Note that a single space at the begining of a line is considered as a word
+	// Check if moving characters is needed
+	if ( i ) {
+		// Copy current line at the end of previous line
 		textstore_insert_chars( line_nb - 1, 
 								textstore.lsize[line_nb-1], 
 								textstore.tlpt[line_nb], 
 								i );
-		// Delete the word on the current line that moved to the previous line
+		// Delete the characters that moved to the previous line
 		textstore_del_chars( 	line_nb, 
 								0, 
 								i );
-		return true;
+		// If current line empty, delete line
+		if ( textstore.lsize[line_nb] == 0 ) {
+			textstore_del_line( line_nb );
+		}
 	}
 
-	return false;
+	return i;
 }
 
 // Move last word of line n to the begining of line n+1
-uint8_t textstore_move_last_word_down( uint16_t line_nb ) {
+// Insert blank line n+1 if needed
+// Returns the number of chars that have been moved
+// If unable to insert line, returns negative error code
+int8_t textstore_move_last_word_down( uint16_t line_nb ) {
+	int8_t i;
 
 	// Sanity checks
 	#ifdef ED_DEBUG
-	if ( line_nb + 1 >= textstore.nblines ) {
+	if ( line_nb >= textstore.nblines ) {
 		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	#endif
 
-	return false;
+	// Line size should be at least 2 chars
+	if ( textstore.lsize[line_nb] < 2 ) {
+		return 0;
+	}
+	
+	// Scan backward for a space character in the current line
+	// Last character is ignored
+	for ( i = textstore.lsize[line_nb] - 2; i > 0; i-- ) {
+		if ( textstore.tlpt[line_nb][i] == TEXTSTORE_CHAR_SPACE ) {
+			i++;
+			break;
+		}
+	}
+	
+	// If a valid boundary is found, move word down
+	if ( i > 0 ) {
+		// IF on the last line
+		// OR
+		// IF number of characters to move does not fits in next line
+		// OR
+		// IF the next line is blank
+		// THEN
+		// Insert new line
+		if ( 	( line_nb == textstore.nblines - 1 ) ||
+				( ( textstore.lsize[line_nb] - i ) > ( TEXTSTORE_LINE_SIZE - textstore.lsize[line_nb+1] ) ) ||
+				( textstore.lsize[line_nb+1] == 0 ) ) {
+			// Line available ?
+			if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
+				return -TEXTSTORE_EMEM;
+			}
+			// Insert a new line after the current line
+			if ( textstore_insert_line( line_nb + 1 ) ) {
+				ed_fatal_error( __FILE__, __LINE__ );
+			}
+		}
+		// Copy remaining part of the line after the cutting point i in the new line
+		textstore_insert_chars( line_nb + 1, 
+								0, 
+								&textstore.tlpt[line_nb][i], 
+								textstore.lsize[line_nb] - i );
+		// Blank the remaining of the current line after the cutting point i
+		textstore_del_chars( 	line_nb, 
+								i, 
+								textstore.lsize[line_nb] - i );
+	}
+
+	return i;
 }

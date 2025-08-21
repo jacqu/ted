@@ -189,7 +189,7 @@ void textedit_init( char* filename, char* password ) {
 	}
 
 	// Clear screen
-	libscreen_clear( TEXTSTORE_CHAR_SPACE );
+	libscreen_clear( LIBSCREEN_SPACE );
 
 	// Reset line position
 	textedit_lpntr = TEXTEDIT_TEXT_BASE;
@@ -198,8 +198,8 @@ void textedit_init( char* filename, char* password ) {
 	textedit_spntr = TEXTEDIT_TEXT_BASE;
 
 	// Initialize status line
-	libscreen_clearline( TEXTEDIT_STATUSSCR_BASE, TEXTSTORE_CHAR_SPACE );
-	memset( textedit_status, TEXTSTORE_CHAR_SPACE, LIBSCREEN_NB_COLS );
+	libscreen_clearline( TEXTEDIT_STATUSSCR_BASE, LIBSCREEN_SPACE );
+	memset( textedit_status, LIBSCREEN_SPACE, LIBSCREEN_NB_COLS );
 
 	// Reset the position of the cursor at the top-left corner of the editor window
 	textedit_cur_x = 0;
@@ -215,7 +215,7 @@ void textedit_init( char* filename, char* password ) {
 void textedit_status_print( char *msg ) {
 
 	// Display message
-	memset( textedit_status, TEXTSTORE_CHAR_SPACE, LIBSCREEN_NB_COLS );
+	memset( textedit_status, LIBSCREEN_SPACE, LIBSCREEN_NB_COLS );
 	snprintf( textedit_status, LIBSCREEN_NB_COLS, "%s", msg );
 	libscreen_copyline_inv( TEXTEDIT_STATUSSCR_BASE, (uint8_t*)textedit_status );
 }
@@ -224,7 +224,7 @@ void textedit_status_print( char *msg ) {
 void textedit_status_popup( char *msg ) {
 
 	// Display message
-	memset( textedit_status, TEXTSTORE_CHAR_SPACE, LIBSCREEN_NB_COLS );
+	memset( textedit_status, LIBSCREEN_SPACE, LIBSCREEN_NB_COLS );
 	snprintf( textedit_status, LIBSCREEN_NB_COLS, "%s", msg );
 	libscreen_copyline_inv( TEXTEDIT_STATUSSCR_BASE, (uint8_t*)textedit_status );
 
@@ -236,7 +236,7 @@ void textedit_status_popup( char *msg ) {
 uint8_t	textedit_status_YN( char *msg ) {
 
 	// Print question
-	memset( textedit_status, TEXTSTORE_CHAR_SPACE, LIBSCREEN_NB_COLS );
+	memset( textedit_status, LIBSCREEN_SPACE, LIBSCREEN_NB_COLS );
 	snprintf( textedit_status, LIBSCREEN_NB_COLS, "%s (%c/%c/%c)", msg, TEXTEDIT_UI_YES_ANSWER, TEXTEDIT_UI_NO_ANSWER, TEXTEDIT_UI_CA_ANSWER );
 	libscreen_copyline_inv( TEXTEDIT_STATUSSCR_BASE, (uint8_t*)textedit_status );
 
@@ -268,9 +268,9 @@ void textedit_mem_full( void ) {
 }
 
 void textedit_update_nonce( void ) {
-	uint8_t *via1 = (uint8_t*)0x304;
-	uint8_t *via2 = (uint8_t*)0x308;
-	uint8_t *tim = (uint8_t*)0x276;
+	uint8_t *via1 = (uint8_t*)ED_ORIC_VIA_TIM1;
+	uint8_t *via2 = (uint8_t*)ED_ORIC_VIA_TIM2;
+	uint8_t *tim = (uint8_t*)ED_ORIC_ULA_TIM;
 
 	textstore.nonce[0] = via1[0];
 	textstore.nonce[1] = via1[1];
@@ -288,7 +288,7 @@ void textedit_event( uint8_t c ) {
 		// Insert soft TAB
 		case TEXTEDIT_CTRL_Z:
 			for ( i = TEXTEDIT_TABSZ - ( textedit_cur_x % TEXTEDIT_TABSZ ); i > 0; i-- ) {
-				textedit_event( LIBSCREEN_SPACE );
+				textedit_event( TEXTSTORE_CHAR_SPACE );
 			}
 		break;
 
@@ -669,7 +669,7 @@ void textedit_event( uint8_t c ) {
 			else {
 				// Find the next word boundary that fits into line #n-1
 				for ( i = textstore.lsize[textedit_lpntr] - 1; i > 0; i-- ) {
-					if ( textstore.tlpt[textedit_lpntr][i] == LIBSCREEN_SPACE ) {
+					if ( textstore.tlpt[textedit_lpntr][i] == TEXTSTORE_CHAR_SPACE ) {
 						if ( i + 1 <= TEXTSTORE_LINE_SIZE - textstore.lsize[textedit_lpntr-1] ) {
 							i++;
 							break;
@@ -825,7 +825,7 @@ void textedit_event( uint8_t c ) {
 			#endif
 			// Scan backward for a space character in the previous line
 			for ( i = TEXTSTORE_LINE_SIZE - 1; i > 0; i-- ) {
-				if ( textstore.tlpt[textedit_lpntr-1][i] == LIBSCREEN_SPACE ) {
+				if ( textstore.tlpt[textedit_lpntr-1][i] == TEXTSTORE_CHAR_SPACE ) {
 					break;
 				}
 			}
@@ -926,7 +926,7 @@ void textedit_event( uint8_t c ) {
 			i = TEXTSTORE_LINE_SIZE - 1;
 			while ( i > 0 ) {
 				i--;
-				if ( textstore.tlpt[textedit_lpntr][i] == LIBSCREEN_SPACE ) {
+				if ( textstore.tlpt[textedit_lpntr][i] == TEXTSTORE_CHAR_SPACE ) {
 					i++;
 					break;
 				}
@@ -934,7 +934,7 @@ void textedit_event( uint8_t c ) {
 			// If character is a space it becomes the new separator
 			// in case of the current separator being before.
 			// If no space found, separator is the cursor
-			if ( ( i == 0 ) || ( ( c == LIBSCREEN_SPACE ) && ( i < textedit_cur_x ) ) ) {
+			if ( ( i == 0 ) || ( ( c == TEXTSTORE_CHAR_SPACE ) && ( i < textedit_cur_x ) ) ) {
 				i = textedit_cur_x; 
 			}
 			// IF on the last line
@@ -1036,7 +1036,7 @@ void textedit_screen_refresh( void ) {
 				libscreen_copyline( TEXTEDIT_EDITORSCR_BASE + i, textstore.tlpt[textedit_spntr+i] );
 			}
 			else {
-				libscreen_clearline( TEXTEDIT_EDITORSCR_BASE + i, TEXTSTORE_CHAR_SPACE );
+				libscreen_clearline( TEXTEDIT_EDITORSCR_BASE + i, LIBSCREEN_SPACE );
 			}
 
 		}

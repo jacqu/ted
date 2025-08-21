@@ -13,6 +13,9 @@
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 // Global defines
+#define ED_ORIC_VIA_TIM1		0x304		//  Timer 1 register address of VIA
+#define ED_ORIC_VIA_TIM2		0x308		// 	Timer 2 register address of VIA
+#define ED_ORIC_ULA_TIM			0x276		//	ULA system timer register
 #define ED_FN_PREFIX_LEN		9
 #define ED_FN_SUFFIX			".ted"
 #define ED_FN_SUFFIX_LEN		4

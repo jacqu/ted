@@ -419,6 +419,49 @@ void textstore_print ( uint8_t type ) {
 	liboric_basic( TEXTSTORE_LPRINT_LFCR );
 }
 
+// Reformat the text starting from line "line_nb"
+// Iterates until CRLF character or blank line or EOF is encountered
+// If return value is positive, it gives the value to substract to the current cursor position
+// If return value is negative, the cursor at the previous line = size of previous line + return value
+int8_t textstore_reformat( uint16_t line_nb, uint8_t curx ) {
+	uint8_t ret, i = 0, j = line_nb;
+
+	// Sanity checks
+	#ifdef ED_DEBUG
+	if ( line_nb >= textstore.nblines ) {
+		ed_fatal_error( __FILE__, __LINE__ );
+	}
+	#endif
+
+	// Nothing to move upwards
+	if ( ( j == 0 ) || ( textstore.tlpt[j][textstore.lsize[j-1]-1] != TEXTSTORE_CHAR_RET ) ) {
+		return 0;
+	}
+
+	// Iterate
+	do {
+		ret = textstore_move_first_words_up( j );
+
+		if ( ret == 0 ) {
+			break;
+		}
+
+		// If on the current line, store the nb of chars that have been moved
+		if ( j == line_nb ) {
+			i = ret;
+		}
+
+		// If CRLF at the end of the current line, end
+		if ( textstore.tlpt[j][textstore.lsize[j]-1] == TEXTSTORE_CHAR_RET )	{
+			break;
+		}
+
+	} while ( 	( ++j < textstore.nblines ) && 
+				( textstore.lsize[j] != 0 ) );
+
+	return curx - i;
+}
+
 // Move as many words as possible from the beginning of line n to the end of line n-1
 // If line n becomes empty, delete line n
 // Returns the number of chars that have been moved
@@ -431,6 +474,11 @@ uint8_t textstore_move_first_words_up( uint16_t line_nb ) {
 		ed_fatal_error( __FILE__, __LINE__ );
 	}
 	#endif
+
+	// If last character of the previous line is a CRLF, do nothing
+	if ( textstore.tlpt[line_nb-1][textstore.lsize[line_nb-1]-1] == TEXTSTORE_CHAR_RET ) {
+		return 0;
+	}
 
 	// Find the next word boundary of line n starting from the right
 	for ( i = textstore.lsize[line_nb] - 1; i >= 0; i-- ) {
@@ -494,24 +542,13 @@ int8_t textstore_move_last_word_down( uint16_t line_nb ) {
 	
 	// If a valid boundary is found, move word down
 	if ( i > 0 ) {
-		// IF on the last line
-		// OR
-		// IF number of characters to move does not fits in next line
-		// OR
-		// IF the next line is blank
-		// THEN
 		// Insert new line
-		if ( 	( line_nb == textstore.nblines - 1 ) ||
-				( ( textstore.lsize[line_nb] - i ) > ( TEXTSTORE_LINE_SIZE - textstore.lsize[line_nb+1] ) ) ||
-				( textstore.lsize[line_nb+1] == 0 ) ) {
-			// Line available ?
-			if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
-				return -TEXTSTORE_EMEM;
-			}
-			// Insert a new line after the current line
-			if ( textstore_insert_line( line_nb + 1 ) ) {
-				ed_fatal_error( __FILE__, __LINE__ );
-			}
+		if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
+			return -TEXTSTORE_EMEM;
+		}
+		// Insert a new line after the current line
+		if ( textstore_insert_line( line_nb + 1 ) ) {
+			ed_fatal_error( __FILE__, __LINE__ );
 		}
 		// Copy remaining part of the line after the cutting point i in the new line
 		textstore_insert_chars( line_nb + 1, 

@@ -5,7 +5,7 @@
 #ifndef __TEXTSTORE_H__
 #define __TEXTSTORE_H__
 
-#define TEXTSTORE_LINES_MAX				400			// Maximum number of lines in the text
+#define TEXTSTORE_LINES_MAX				350			// Maximum number of lines in the text
 #define TEXTSTORE_LINE_SIZE				LIBSCREEN_NB_COLS			
 													// Number of characters in a line
 #define TEXTSTORE_NONCE_SZ				CHACHA_NONCE_SZ
@@ -71,6 +71,7 @@ void 		textstore_write_chars			( uint16_t, uint8_t, uint8_t*, uint8_t );
 uint16_t	textstore_sizeof				( void );
 void 		textstore_color_mcp40			( uint8_t, uint8_t );
 void		textstore_print					( uint8_t );
+int8_t 		textstore_reformat				( uint16_t, uint8_t );
 uint8_t 	textstore_move_first_words_up	( uint16_t );
 int8_t 		textstore_move_last_word_down	( uint16_t );
 

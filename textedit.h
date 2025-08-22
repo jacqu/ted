@@ -91,5 +91,7 @@ void 	textedit_screen_refresh	( void );
 void	textedit_status_refresh	( void );
 void	textedit_cursor_refresh	( void );
 void 	textedit_screensaver	( void );
+void 	textedit_inclptr		( void );
+void	textedit_adjust_cursor	( void );
 
 #endif /* __TEXTEDIT_H__ */

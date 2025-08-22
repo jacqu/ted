@@ -421,10 +421,10 @@ void textstore_print ( uint8_t type ) {
 
 // Reformat the text starting from line "line_nb"
 // Iterates until CRLF character or blank line or EOF is encountered
-// If return value is positive, it gives the value to substract to the current cursor position
-// If return value is negative, the cursor at the previous line = size of previous line + return value
-int8_t textstore_reformat( uint16_t line_nb, uint8_t curx ) {
-	uint8_t ret, i = 0, j = line_nb;
+// Returns the number of characters moved in the current line
+int8_t textstore_reformat( uint16_t line_nb ) {
+	int8_t ret, i = 0;
+	uint16_t j = line_nb;
 
 	// Sanity checks
 	#ifdef ED_DEBUG
@@ -434,7 +434,7 @@ int8_t textstore_reformat( uint16_t line_nb, uint8_t curx ) {
 	#endif
 
 	// Nothing to move upwards
-	if ( ( j == 0 ) || ( textstore.tlpt[j][textstore.lsize[j-1]-1] != TEXTSTORE_CHAR_RET ) ) {
+	if ( ( j == 0 ) || ( textstore.tlpt[j-1][textstore.lsize[j-1]-1] == TEXTSTORE_CHAR_RET ) ) {
 		return 0;
 	}
 
@@ -459,13 +459,13 @@ int8_t textstore_reformat( uint16_t line_nb, uint8_t curx ) {
 	} while ( 	( ++j < textstore.nblines ) && 
 				( textstore.lsize[j] != 0 ) );
 
-	return curx - i;
+	return i;
 }
 
 // Move as many words as possible from the beginning of line n to the end of line n-1
 // If line n becomes empty, delete line n
 // Returns the number of chars that have been moved
-uint8_t textstore_move_first_words_up( uint16_t line_nb ) {
+int8_t textstore_move_first_words_up( uint16_t line_nb ) {
 	int8_t i;
 	
 	// Sanity checks
@@ -482,15 +482,18 @@ uint8_t textstore_move_first_words_up( uint16_t line_nb ) {
 
 	// Find the next word boundary of line n starting from the right
 	for ( i = textstore.lsize[line_nb] - 1; i >= 0; i-- ) {
-		if ( textstore.tlpt[line_nb][i] == TEXTSTORE_CHAR_SPACE ) {
+		// Check at each boundary if it fits
+		if ( 	( i == textstore.lsize[line_nb] - 1 ) ||
+				( textstore.tlpt[line_nb][i] == TEXTSTORE_CHAR_SPACE ) ) {
 			// Check if this group of words fit at the end of previous line
-			if ( i + 1 <= TEXTSTORE_LINE_SIZE - textstore.lsize[line_nb-1] ) {
-				// It fits, increment i so that it contains the length of the group of words
-				i++;
+			if ( i < TEXTSTORE_LINE_SIZE - textstore.lsize[line_nb-1] ) {
+				// It fits, end loop
 				break;
 			}
 		}
 	}
+	// Increment the boundary position to express the size of the block to move
+	i++;
 
 	// Check if moving characters is needed
 	if ( i ) {
@@ -559,7 +562,10 @@ int8_t textstore_move_last_word_down( uint16_t line_nb ) {
 		textstore_del_chars( 	line_nb, 
 								i, 
 								textstore.lsize[line_nb] - i );
+		// Returns the number of characters moved
+		return textstore.lsize[line_nb+1];
 	}
-
-	return i;
+	else {
+		return 0;
+	}
 }

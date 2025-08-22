@@ -667,13 +667,15 @@ void textedit_event( uint8_t c ) {
 			}
 		}
 		// Reformat
-		i = textstore_reformat( textedit_lpntr, textedit_cur_x );
-		if ( i > 0 ) {
+		i = textstore_reformat( textedit_lpntr );
+		// Check if cursor needs to go one line up
+		if ( textedit_cur_x - i > 0 ) {
 			textedit_cur_x -= i;
 		}
-		if ( i < 0 ) {
+		else {
 			textedit_lpntr--;
-			textedit_cur_x = textstore.lsize[textedit_lpntr] + i;
+			textedit_cur_x = textstore.lsize[textedit_lpntr] - ( i - textedit_cur_x );
+			textedit_adjust_cursor( );
 			if ( textedit_cur_y > TEXTEDIT_EDITORSCR_BASE  ) {
 				textedit_cur_y--;
 			}
@@ -722,7 +724,7 @@ void textedit_event( uint8_t c ) {
 		textedit_cur_x = 0;
 		// Reformat
 		if ( textedit_lpntr + 1 < textstore.nblines ) {
-			textstore_reformat( textedit_lpntr+1, 0 );
+			textstore_reformat( textedit_lpntr + 1 );
 		}
 		break;
 
@@ -815,10 +817,15 @@ void textedit_event( uint8_t c ) {
 			libscreen_copyline( textedit_cur_y, textstore.tlpt[textedit_lpntr] );
 			// Initialize nb chars moved
 			i = 0;
-			// If last char is not space nor ret, word wrap line
+			// If last char is not space nor ret, try to word wrap line
 			if ( 	( textstore.tlpt[textedit_lpntr][TEXTSTORE_LINE_SIZE-1] != TEXTSTORE_CHAR_SPACE ) &&
 					( textstore.tlpt[textedit_lpntr][TEXTSTORE_LINE_SIZE-1] != TEXTSTORE_CHAR_RET ) ) {
 				i = textstore_move_last_word_down( textedit_lpntr );
+				// Check if error
+				if ( i == -TEXTSTORE_EMEM ) {
+					textedit_mem_full( );
+					break;
+				}
 			}
 			// Update cursor position
 			textedit_cur_x++;
@@ -843,7 +850,7 @@ void textedit_event( uint8_t c ) {
 				textedit_inclptr( );
 				// Reformat
 				if ( textedit_lpntr + 1 < textstore.nblines ) {
-					textstore_reformat( textedit_lpntr+1, 0 );
+					textstore_reformat( textedit_lpntr + 1 );
 				}
 				// Break to force whole screen refresh
 				break;
@@ -858,7 +865,12 @@ void textedit_event( uint8_t c ) {
 		if ( textstore.lsize[textedit_lpntr] == TEXTSTORE_LINE_SIZE ) {
 			// Try to move last word to next line
 			i = textstore_move_last_word_down( textedit_lpntr );
-			if ( i ) {
+			// Check if error
+			if ( i == -TEXTSTORE_EMEM ) {
+				textedit_mem_full( );
+				break;
+			}
+			if ( i > 0 ) {
 				// Update saved flag
 				textedit_saved_flag = false;
 				// Update cursor position on next line
@@ -870,7 +882,7 @@ void textedit_event( uint8_t c ) {
 				textstore_insert_char( textedit_lpntr, textedit_cur_x, c );
 				// Reformat
 				if ( textedit_lpntr + 1 < textstore.nblines ) {
-					textstore_reformat( textedit_lpntr+1, 0 );
+					textstore_reformat( textedit_lpntr + 1 );
 				}
 				// Break to force whole screen refresh
 				break;

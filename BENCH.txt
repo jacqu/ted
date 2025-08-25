@@ -1,8 +1,44 @@
-// Scattered line to check word wrap
-aaa bbb ccc ddd eee fff ggg hhh iii jj
-
 // Scattered line to check right formatting after del
-aaa bbb ccc ddd eee fff ggg hhh iii jjjj
+aaa bbb ccc ddd eee fff ggg hhh iii jjj
+                                       ^j
+->
+aaa bbb ccc ddd eee fff ggg hhh iii 
+jjjj
+    ^DEL
+-> 
+aaa bbb ccc ddd eee fff ggg hhh iii jjj
+
+// Del at beginning of line merges two words
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa aaa 
+bbb
+^DEL
+->
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 
+aaabbb
+
+// Space splits the first word yielding reformatting
+aaa bbb ccc ddd eee fff ggg hhh iii 
+jjjjjj
+ ^SPACE
+->
+aaa bbb ccc ddd eee fff ggg hhh iii j 
+jjjjj
+
+// Only last line with last char different from ret or space
+// If ret or space deleted, multiline reformatting
+aaa bbb ccc ddd eee fff ggg hhh iii kkk 
+lll
+^DEL
+->
+aaa bbb ccc ddd eee fff ggg hhh iii 
+kkklll
+
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 
+bbbb
+^DEL
+->
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab
+bbb
 
 
 // Huge text to check robustness

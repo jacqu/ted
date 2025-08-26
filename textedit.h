@@ -50,6 +50,8 @@
 #define TEXTEDIT_TEXT_BASE			0				// Index of the first line of the text
 #define TEXTEDIT_LINES_MAX			TEXTSTORE_LINES_MAX
 													// Max number of lines in the file
+#define TEXTEDIT_INSBUF_SZ			3				// Size of the insert buffer
+
 // Screen structure
 #define TEXTEDIT_STATUSSCR_BASE		0				// Line of the status
 #define TEXTEDIT_EDITORSCR_BASE		1				// First line of the editor in screen
@@ -93,5 +95,6 @@ void	textedit_cursor_refresh	( void );
 void 	textedit_screensaver	( void );
 void 	textedit_inclptr		( void );
 void	textedit_adjust_cursor	( void );
+uint8_t textedit_insert			( uint16_t, uint8_t, uint8_t );
 
 #endif /* __TEXTEDIT_H__ */

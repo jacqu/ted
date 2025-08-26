@@ -32,6 +32,7 @@ char*			textedit_filename = NULL;
 char*			textedit_password = NULL;
 uint32_t 		textedit_sc_counter;
 bool			textedit_sc_enable = true;
+uint8_t 		textedit_insbuf[TEXTEDIT_INSBUF_SZ][TEXTSTORE_LINE_SIZE];
 
 // Exit cleanly
 void textedit_exit( void ) {
@@ -994,7 +995,34 @@ void textedit_adjust_cursor( void ) {
 			// Place the cursor on the CRLF char
 			textedit_cur_x--;
 		}
-
-
 	}
+}
+
+uint8_t textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
+	uint16_t 	lidx;
+	uint8_t		ib_l, ib_c, wc;
+	uint8_t		cidx;
+
+	// If on the first line, start from this line
+	if ( lpos == 0 ) {
+		lidx = 0;
+	}
+	// Else, start from previous line
+	else {
+		lidx = lpos - 1;
+	}
+
+	// Scan the text linearly and break it into words
+	ib_l = ib_c = wc = 0;
+	for ( ;lidx < textstore.nblines; lidx++ ) {
+		for ( cidx = 0; cidx < textstore.lsize[lidx] ; cidx++ ) {
+			// if current character is space, reset word counter
+			if ( textstore.tlpt[lidx][cidx] == TEXTSTORE_CHAR_SPACE ) {
+				wc = 0;
+			}
+			// Insert current character
+			textedit_insbuf[ib_l][ib_c] = textstore.tlpt[lidx][cidx]
+		}
+	}
+
 }

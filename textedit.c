@@ -937,8 +937,8 @@ void textedit_screen_refresh( void ) {
 // Refresh status line
 void textedit_status_refresh( void ) {
 	char saved, *state;
-	static char inverse[] = "INVSE";
-	static char normal[] = "NORML";
+	static char inverse[] = "INV";
+	static char normal[] = "STD";
 
 	if ( textedit_filename == NULL ) {
 		ed_fatal_error( __FILE__, __LINE__ );
@@ -958,14 +958,17 @@ void textedit_status_refresh( void ) {
 		state = normal;
 	}
 
-	snprintf( 	textedit_status, 
-				LIBSCREEN_NB_COLS+1, 
-				"%-13s%c [CTRL]-G:GUIDE %03d%% %s",  
+	// Insert blue paper code
+	textedit_status[0] = LIBSCREEN_BLUE_PAPER;
+
+	snprintf( 	&textedit_status[1], 
+				LIBSCREEN_NB_COLS, 
+				"%-13s%c %03d%% %s [CTRL]-G>>HELP",  
 				textedit_filename,
 				saved,
 				( textstore.nblines * 100 ) / TEXTSTORE_LINES_MAX,
 				state );
-	libscreen_copyline_inv( TEXTEDIT_STATUSSCR_BASE, (uint8_t*)textedit_status );
+	libscreen_copyline( TEXTEDIT_STATUSSCR_BASE, (uint8_t*)textedit_status );
 }
 
 // Refresh cursor

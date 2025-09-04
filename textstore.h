@@ -68,11 +68,12 @@ void 		textstore_del_char				( uint16_t, uint8_t );
 void		textstore_insert_chars			( uint16_t, uint8_t, uint8_t*, uint8_t );
 void 		textstore_del_chars				( uint16_t, uint8_t, uint8_t );
 void 		textstore_write_chars			( uint16_t, uint8_t, uint8_t*, uint8_t );
+void 		textstore_replace_line			( uint16_t, uint8_t*, uint8_t );
+void 		textstore_clear_line			( uint16_t );
 uint16_t	textstore_sizeof				( void );
 void 		textstore_color_mcp40			( uint8_t, uint8_t );
 void		textstore_print					( uint8_t );
 int8_t 		textstore_reformat				( uint16_t );
 int8_t 		textstore_move_first_words_up	( uint16_t );
-int8_t 		textstore_move_last_word_down	( uint16_t );
 
 #endif /* __TEXTSTORE_H__ */

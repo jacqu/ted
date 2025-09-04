@@ -292,6 +292,46 @@ void textstore_write_chars( uint16_t line_nb, uint8_t char_nb, uint8_t *chars, u
 	memcpy( &textstore.tlpt[line_nb][char_nb], chars, chars_nb );
 }
 
+// Replace existing line
+void textstore_replace_line( uint16_t line_nb, uint8_t *chars, uint8_t chars_nb ) {
+
+	// Sanity checks
+	#ifdef ED_DEBUG
+	if ( line_nb >= textstore.nblines ) {
+		ed_fatal_error( __FILE__, __LINE__ );
+	}
+	if ( chars_nb >= TEXTSTORE_LINE_SIZE ) {
+		ed_fatal_error( __FILE__, __LINE__ );
+	}
+	#endif
+
+	// Clear line
+	memset( textstore.tlpt[line_nb], TEXTSTORE_CHAR_SPACE, TEXTSTORE_LINE_SIZE );
+
+	// Replace line content
+	memcpy( textstore.tlpt[line_nb], chars, chars_nb );
+
+	// Update char counter
+	textstore.lsize[line_nb] = chars_nb;
+}
+
+// Clear existing line
+void textstore_clear_line( uint16_t line_nb ) {
+
+	// Sanity checks
+	#ifdef ED_DEBUG
+	if ( line_nb >= textstore.nblines ) {
+		ed_fatal_error( __FILE__, __LINE__ );
+	}
+	#endif
+
+	// Update line size
+	textstore.lsize[line_nb] = 0;
+
+	// Clear line
+	memset( textstore.tlpt[line_nb], TEXTSTORE_CHAR_SPACE, TEXTSTORE_LINE_SIZE );
+}
+
 // Compute actual size of the structure
 uint16_t textstore_sizeof( void ) {
 	uint16_t i, j = 0;
@@ -308,6 +348,8 @@ uint16_t textstore_sizeof( void ) {
 	// Compute data structure size
 	return ( j - (uint16_t)&textstore );
 }
+
+
 
 // Change color on MCP-40
 void textstore_color_mcp40( uint8_t type, uint8_t color ) {
@@ -426,15 +468,10 @@ int8_t textstore_reformat( uint16_t line_nb ) {
 	int8_t ret, i = 0;
 	uint16_t j = line_nb;
 
-	// Sanity checks
-	#ifdef ED_DEBUG
-	if ( line_nb >= textstore.nblines ) {
-		ed_fatal_error( __FILE__, __LINE__ );
-	}
-	#endif
-
 	// Nothing to move upwards
-	if ( ( j == 0 ) || ( textstore.tlpt[j-1][textstore.lsize[j-1]-1] == TEXTSTORE_CHAR_RET ) ) {
+	if ( 	( j == 0 ) || 
+			( j >= textstore.nblines ) ||
+			( textstore.tlpt[j-1][textstore.lsize[j-1]-1] == TEXTSTORE_CHAR_RET ) ) {
 		return 0;
 	}
 
@@ -513,59 +550,4 @@ int8_t textstore_move_first_words_up( uint16_t line_nb ) {
 	}
 
 	return i;
-}
-
-// Move last word of line n to the begining of line n+1
-// Insert blank line n+1 if needed
-// Returns the number of chars that have been moved
-// If unable to insert line, returns negative error code
-int8_t textstore_move_last_word_down( uint16_t line_nb ) {
-	int8_t i;
-
-	// Sanity checks
-	#ifdef ED_DEBUG
-	if ( line_nb >= textstore.nblines ) {
-		ed_fatal_error( __FILE__, __LINE__ );
-	}
-	#endif
-
-	// Line size should be at least 2 chars
-	if ( textstore.lsize[line_nb] < 2 ) {
-		return 0;
-	}
-	
-	// Scan backward for a space character in the current line
-	// Last character is ignored
-	for ( i = textstore.lsize[line_nb] - 2; i > 0; i-- ) {
-		if ( textstore.tlpt[line_nb][i] == TEXTSTORE_CHAR_SPACE ) {
-			i++;
-			break;
-		}
-	}
-	
-	// If a valid boundary is found, move word down
-	if ( i > 0 ) {
-		// Insert new line
-		if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
-			return -TEXTSTORE_EMEM;
-		}
-		// Insert a new line after the current line
-		if ( textstore_insert_line( line_nb + 1 ) ) {
-			ed_fatal_error( __FILE__, __LINE__ );
-		}
-		// Copy remaining part of the line after the cutting point i in the new line
-		textstore_insert_chars( line_nb + 1, 
-								0, 
-								&textstore.tlpt[line_nb][i], 
-								textstore.lsize[line_nb] - i );
-		// Blank the remaining of the current line after the cutting point i
-		textstore_del_chars( 	line_nb, 
-								i, 
-								textstore.lsize[line_nb] - i );
-		// Returns the number of characters moved
-		return textstore.lsize[line_nb+1];
-	}
-	else {
-		return 0;
-	}
 }

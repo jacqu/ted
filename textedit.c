@@ -32,7 +32,6 @@ char*			textedit_filename = NULL;
 char*			textedit_password = NULL;
 uint32_t 		textedit_sc_counter;
 bool			textedit_sc_enable = true;
-uint8_t 		textedit_insbuf[TEXTEDIT_INSBUF_SZ][TEXTSTORE_LINE_SIZE];
 
 // Exit cleanly
 void textedit_exit( void ) {
@@ -341,6 +340,8 @@ void textedit_event( uint8_t c ) {
 		// Keyboard buffer flush
 		cgetc( );
 
+		// Refresh text portion of the screen
+		textedit_screen_refresh( );
 		break;
 
 		case TEXTEDIT_CTRL_S:
@@ -435,6 +436,8 @@ void textedit_event( uint8_t c ) {
 		textedit_lpntr = textedit_spntr;
 		// Update cursor horizontal position at the begin of the line
 		textedit_cur_x = 0;
+		// Refresh text portion of the screen
+		textedit_screen_refresh( );
 		break;
 
 		// Page down
@@ -457,6 +460,8 @@ void textedit_event( uint8_t c ) {
 		textedit_lpntr = textedit_spntr + TEXTEDIT_EDITORSCR_SZ - 1;
 		// Update cursor horizontal position at the end of the line
 		textedit_cur_x = textstore.lsize[textedit_lpntr];
+		// Refresh text portion of the screen
+		textedit_screen_refresh( );
 		break;
 
 		case TEXTEDIT_KEY_ESC:
@@ -514,6 +519,8 @@ void textedit_event( uint8_t c ) {
 				textedit_saved_flag = false;
 			}
 		}
+		// Refresh text portion of the screen
+		textedit_screen_refresh( );
 		break;
 
 		case TEXTEDIT_CTRL_V:
@@ -545,6 +552,8 @@ void textedit_event( uint8_t c ) {
 		}
 		// Update x cursor
 		textedit_cur_x = textstore.lsize[textedit_lpntr];
+		// Refresh text portion of the screen
+		textedit_screen_refresh( );
 		break;
 
 		case TEXTEDIT_ARROW_RIGHT:
@@ -564,7 +573,6 @@ void textedit_event( uint8_t c ) {
 		textedit_adjust_cursor( );
 		// Refresh current line
 		libscreen_copyline( textedit_cur_y, textstore.tlpt[textedit_lpntr] );
-		goto textedit_skip_screen_refresh;
 		break;
 
 		case TEXTEDIT_ARROW_LEFT:
@@ -585,7 +593,6 @@ void textedit_event( uint8_t c ) {
 		textedit_adjust_cursor( );
 		// Refresh current line
 		libscreen_copyline( textedit_cur_y, textstore.tlpt[textedit_lpntr] );
-		goto textedit_skip_screen_refresh;
 		break;
 
 		case TEXTEDIT_ARROW_UP:
@@ -608,6 +615,8 @@ void textedit_event( uint8_t c ) {
 		}
 		// Adjust cursor position in case its at the right of a CRLF
 		textedit_adjust_cursor( );
+		// Refresh text portion of the screen
+		textedit_screen_refresh( );
 		break;
 
 		case TEXTEDIT_ARROW_DOWN:
@@ -630,102 +639,31 @@ void textedit_event( uint8_t c ) {
 		}
 		// Adjust cursor position in case its at the right of a CRLF
 		textedit_adjust_cursor( );
+		// Refresh text portion of the screen
+		textedit_screen_refresh( );
 		break;
 
 		case TEXTEDIT_KEY_DEL:
-		// Cursor is not at beginning of the line
-		if ( textedit_cur_x ) {
-			textstore_del_char( textedit_lpntr, --textedit_cur_x );
-			// Update saved flag
-			textedit_saved_flag = false;
-		}
-		// Cursor is at beginning of the line
-		else {
-			// First line ?
-			if ( textedit_lpntr == TEXTEDIT_TEXT_BASE ) {
-				atmos_ping( );
-				textedit_status_popup( "FIRST LINE!" );
-				break;
-			}
-			// Update saved flag
-			textedit_saved_flag = false;
-			// If current line empty, delete current line
-			if ( textstore.lsize[textedit_lpntr] == 0 ) {
-				textstore_del_line( textedit_lpntr );
-			}
-			// Decrement line pointer;
-			textedit_lpntr--;
-			// Delete last character from the previous line
-			textstore_del_char( textedit_lpntr, textstore.lsize[textedit_lpntr] - 1 );
-			// Update x cursor to be at the end of previous line
-			textedit_cur_x = textstore.lsize[textedit_lpntr];
-			// Decrement y cursor position
-			if ( textedit_cur_y > TEXTEDIT_EDITORSCR_BASE  ) {
-				textedit_cur_y--;
-			}
-			else  {
-				textedit_spntr--;
-			}
-		}
-		// Reformat
-		i = textstore_reformat( textedit_lpntr );
-		// Check if cursor needs to go one line up
-		if ( textedit_cur_x - i > 0 ) {
-			textedit_cur_x -= i;
+		if ( textedit_insert( textedit_lpntr, textedit_cur_x, c ) == false ) {
+			// Refresh text portion of the screen
+			textedit_screen_refresh( );
+			atmos_ping( );
 		}
 		else {
-			textedit_lpntr--;
-			textedit_cur_x = textstore.lsize[textedit_lpntr] - ( i - textedit_cur_x );
-			textedit_adjust_cursor( );
-			if ( textedit_cur_y > TEXTEDIT_EDITORSCR_BASE  ) {
-				textedit_cur_y--;
-			}
-			else  {
-				textedit_spntr--;
-			}
+			// Update saved flag
+			textedit_saved_flag = false;
 		}
 		break;
 
 		case TEXTEDIT_KEY_RET:
-		// Line available ?
-		if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
-			textedit_mem_full( );
-			break;
-		}
-		// Insert a new line
-		if ( textstore_insert_line( ++textedit_lpntr ) ) {
-			ed_fatal_error( __FILE__, __LINE__ );
-		}
-		// Cursor before the end of the line ?
-		if ( textedit_cur_x < textstore.lsize[textedit_lpntr-1] ) {
-			// Copy remaining part of the line after the cursor in the new line
-			textstore_insert_chars( textedit_lpntr, 
-									0, 
-									&textstore.tlpt[textedit_lpntr-1][textedit_cur_x], 
-									textstore.lsize[textedit_lpntr-1] - textedit_cur_x );
-			// Blank the remaining of the previous line after the cursor if required
-			textstore_del_chars( 	textedit_lpntr - 1, 
-									textedit_cur_x, 
-									textstore.lsize[textedit_lpntr-1] - textedit_cur_x );
-		}
-		// Insert CRLF code at the end of the line
-		textstore_insert_char( 	textedit_lpntr - 1, 
-								textedit_cur_x, 
-								TEXTSTORE_CHAR_RET );
-		// Update saved flag
-		textedit_saved_flag = false;
-		// Update cursor position
-		if ( textedit_cur_y < TEXTEDIT_EDITORSCR_LAST ) {
-			textedit_cur_y++;
+		if ( textedit_insert( textedit_lpntr, textedit_cur_x, TEXTSTORE_CHAR_RET ) == false ) {
+			// Refresh text portion of the screen
+			textedit_screen_refresh( );
+			atmos_ping( );
 		}
 		else {
-			textedit_spntr++;
-		}
-		// Reset cursor position and char counter
-		textedit_cur_x = 0;
-		// Reformat
-		if ( textedit_lpntr + 1 < textstore.nblines ) {
-			textstore_reformat( textedit_lpntr + 1 );
+			// Update saved flag
+			textedit_saved_flag = false;
 		}
 		break;
 
@@ -790,118 +728,18 @@ void textedit_event( uint8_t c ) {
 			c |= LIBSCREEN_INVERT_BIT;
 		}
 
-		//
-		// More than one character free in the line
-		//
-		if ( textstore.lsize[textedit_lpntr] < TEXTSTORE_LINE_SIZE - 1 ) {
+		// Insert char
+		if ( textedit_insert( textedit_lpntr, textedit_cur_x, c ) == false ) {
+			atmos_ping( );
+			// Refresh text portion of the screen
+			textedit_screen_refresh( );
+		}
+		else {
 			// Update saved flag
 			textedit_saved_flag = false;
-			// Insert character
-			textstore_insert_char( textedit_lpntr, textedit_cur_x, c );
-			// Refresh current line
-			libscreen_copyline( textedit_cur_y, textstore.tlpt[textedit_lpntr] );
-			// Update cursor position
-			textedit_cur_x++;
-			// Skip whole screen refresh
-			goto textedit_skip_screen_refresh;
-		}
-
-		//
-		// Exactly one character free in the line
-		//
-		if ( textstore.lsize[textedit_lpntr] == TEXTSTORE_LINE_SIZE - 1 ) {
-			// Update saved flag
-			textedit_saved_flag = false;
-			// Insert character
-			textstore_insert_char( textedit_lpntr, textedit_cur_x, c );
-			// Refresh current line
-			libscreen_copyline( textedit_cur_y, textstore.tlpt[textedit_lpntr] );
-			// Initialize nb chars moved
-			i = 0;
-			// If last char is not space nor ret, try to word wrap line
-			if ( 	( textstore.tlpt[textedit_lpntr][TEXTSTORE_LINE_SIZE-1] != TEXTSTORE_CHAR_SPACE ) &&
-					( textstore.tlpt[textedit_lpntr][TEXTSTORE_LINE_SIZE-1] != TEXTSTORE_CHAR_RET ) ) {
-				i = textstore_move_last_word_down( textedit_lpntr );
-				// Check if error
-				if ( i == -TEXTSTORE_EMEM ) {
-					textedit_mem_full( );
-					break;
-				}
-			}
-			// Update cursor position
-			textedit_cur_x++;
-			// Check if cursor needs to change line
-			if ( TEXTSTORE_LINE_SIZE - textedit_cur_x <= i ) {
-				// If on last line, insert new line
-				if ( textedit_lpntr == textstore.nblines - 1 ) {
-					// Line available ?
-					if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
-						textedit_mem_full( );
-						textedit_cur_x--;
-						break;
-					}
-					// Insert a new line after the current line
-					if ( textstore_insert_line( textedit_lpntr + 1 ) ) {
-						ed_fatal_error( __FILE__, __LINE__ );
-					}
-				}
-				// Update cursor position on next line
-				textedit_cur_x = i - ( TEXTSTORE_LINE_SIZE - textedit_cur_x );
-				// Increment line pointer
-				textedit_inclptr( );
-				// Reformat
-				if ( textedit_lpntr + 1 < textstore.nblines ) {
-					textstore_reformat( textedit_lpntr + 1 );
-				}
-				// Break to force whole screen refresh
-				break;
-			}
-			// Skip whole screen refresh since cursor stays at the same line
-			goto textedit_skip_screen_refresh;
-		}
-
-		//
-		// Line full
-		//
-		if ( textstore.lsize[textedit_lpntr] == TEXTSTORE_LINE_SIZE ) {
-			// Try to move last word to next line
-			i = textstore_move_last_word_down( textedit_lpntr );
-			// Check if error
-			if ( i == -TEXTSTORE_EMEM ) {
-				textedit_mem_full( );
-				break;
-			}
-			if ( i > 0 ) {
-				// Update saved flag
-				textedit_saved_flag = false;
-				// Update cursor position on next line
-				textedit_cur_x++;
-				textedit_cur_x = i - ( TEXTSTORE_LINE_SIZE - textedit_cur_x );
-				// Increment line pointer
-				textedit_inclptr( );
-				// Insert character
-				textstore_insert_char( textedit_lpntr, textedit_cur_x, c );
-				// Reformat
-				if ( textedit_lpntr + 1 < textstore.nblines ) {
-					textstore_reformat( textedit_lpntr + 1 );
-				}
-				// Break to force whole screen refresh
-				break;
-
-			}
-			else {
-				// No room for additional character
-				atmos_ping( );
-				goto textedit_skip_screen_refresh;
-			}
 		}
 		break;
 	}
-
-	// Refresh text portion of the screen
-	textedit_screen_refresh( );
-
-	textedit_skip_screen_refresh:
 
 	// Refresh status line
 	textedit_status_refresh( );
@@ -976,19 +814,6 @@ void textedit_cursor_refresh( void ) {
 	libscreen_textbuf[textedit_cur_y*LIBSCREEN_NB_COLS+textedit_cur_x] ^= LIBSCREEN_INVERT_BIT;
 }
 
-// Increment line pointer
-void textedit_inclptr( void ) {
-	// Increment line pointer
-	textedit_lpntr++;
-	// Update vertical cursor position
-	if ( textedit_cur_y < TEXTEDIT_EDITORSCR_LAST ) {
-		textedit_cur_y++;
-	}
-	else {
-		textedit_spntr++;
-	}
-}
-
 // Adjust cursor position
 void textedit_adjust_cursor( void ) {
 	// Check if cursor is at EOL and line is not empty
@@ -1001,31 +826,231 @@ void textedit_adjust_cursor( void ) {
 	}
 }
 
-uint8_t textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
-	uint16_t 	lidx;
-	uint8_t		ib_l, ib_c, wc;
-	uint8_t		cidx;
+//
+// Character insertion handling
+// Returns false if insertion failed
+// Returns true if insertion succeeded
+// 
+bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
+															// Line buffer
+	static uint8_t 	linebuf[TEXTEDIT_INSBUFSCAN*TEXTSTORE_LINE_SIZE+1];
+	static uint8_t 	wordbuf[TEXTSTORE_LINE_SIZE];			// Word buffer
+	uint16_t 		lidx;									// Line index
+	uint16_t		lidxstart, lidxstop;					// Start and stop line numbers for scanning
+	uint8_t			lbufsz = 0;								// Line buffer size
+	uint8_t			lbufc = 0;								// Cursor position in line buffer
+	uint8_t			cidx = 0;								// Char index in word buffer
+	uint8_t			wbufsz = 0;								// Word buffer size
+	uint8_t			wbufc = 0;								// Cursor position in word buffer
+	bool			wbufcflag = false;						// Flag indicating cursor position has been set
 
-	// If on the first line, start from this line
+	// If there is no more line left and the char is not DEL, refuse insertion
+	if ( 	( textstore.nblines == TEXTSTORE_LINES_MAX ) && 
+			( c != TEXTEDIT_KEY_DEL ) ) {
+		return false;
+	}
+
+	// Check for shortcuts
+	if ( 	( textstore.lsize[lpos] < TEXTSTORE_LINE_SIZE - 1 ) &&
+			( c != TEXTEDIT_KEY_DEL ) &&
+			( c != TEXTSTORE_CHAR_SPACE ) &&
+			( c != TEXTSTORE_CHAR_RET ) ) {
+		// Insert char
+		textstore_insert_char( lpos, cpos, c );
+		// Increment cursor horizontal position
+		textedit_cur_x++;
+		// Refresh only this line
+		libscreen_copyline( textedit_cur_y, textstore.tlpt[textedit_lpntr] );
+		return true;
+	}
+	
+	// Define scanning range
 	if ( lpos == 0 ) {
-		lidx = 0;
+		lidxstart = 0;
+		lidxstop = TEXTEDIT_INSBUFSCAN - 1;
 	}
-	// Else, start from previous line
 	else {
-		lidx = lpos - 1;
+		lidxstart = lpos - 1;
+		lidxstop = lidxstart + TEXTEDIT_INSBUFSCAN;
+	}
+	if ( lidxstop > textstore.nblines ) {
+		lidxstop = textstore.nblines;
 	}
 
-	// Scan the text linearly and break it into words
-	ib_l = ib_c = wc = 0;
-	for ( ;lidx < textstore.nblines; lidx++ ) {
-		for ( cidx = 0; cidx < textstore.lsize[lidx] ; cidx++ ) {
-			// if current character is space, reset word counter
-			if ( textstore.tlpt[lidx][cidx] == TEXTSTORE_CHAR_SPACE ) {
-				wc = 0;
-			}
-			// Insert current character
-			textedit_insbuf[ib_l][ib_c] = textstore.tlpt[lidx][cidx]
+	// Copy scanned text portion into line buffer
+	for ( lidx = lidxstart; lidx < lidxstop; lidx++ ) {
+
+		// Sanity check
+		#ifdef ED_DEBUG
+		if ( lbufsz + textstore.lsize[lidx] > TEXTEDIT_INSBUFSCAN*TEXTSTORE_LINE_SIZE ) {
+			ed_fatal_error( __FILE__, __LINE__ );
+		}
+		#endif
+
+		// Copy text into line buffer
+		memcpy( &linebuf[lbufsz], textstore.tlpt[lidx], textstore.lsize[lidx] );
+
+		// Update line buffer size
+		lbufsz += textstore.lsize[lidx];
+		
+
+		// Update cursor position within line buffer
+		if ( lidx < lpos ) {
+			lbufc += textstore.lsize[lidx];
+		}
+		if ( lidx == lpos ) {
+			lbufc += cpos;
 		}
 	}
 
+	// If typed char is DEL, remove a char
+	if ( c == TEXTEDIT_KEY_DEL ) {
+		if ( lbufc ) {
+			// Move the chars starting from the cursor one step left
+			// If cursor is at the end of the buffer, do nothing
+			memmove( &linebuf[lbufc-1], &linebuf[lbufc], lbufsz - lbufc );
+
+			// Decrement size of the buffer
+			lbufsz--;
+
+			// Decrement position of the cursor
+			lbufc--;
+		}
+		// Try to DEL at the start on the line buffer
+		else {
+			return false;
+		}
+	}
+	// Every other typed chars should be inserted
+	else {
+		// Move the chars starting form the cursor one step right
+		// If cursor is at the end of the buffer, do nothing
+		memmove( &linebuf[lbufc+1], &linebuf[lbufc], lbufsz - lbufc );
+
+		// Insert char
+		linebuf[lbufc] = c;
+
+		// Increment size of the buffer
+		lbufsz++;
+
+		// Increment position of the cursor
+		lbufc++;
+	}
+
+	// Scan the lines from the start
+	lidx = lidxstart;
+
+	// Clear current line
+	textstore_clear_line( lidx );
+
+	// Scan whole line buffer, look for for next word
+	for ( cidx = 0; cidx < lbufsz; cidx++ ) {
+		
+		// If word buffer not full
+		if ( wbufsz < TEXTSTORE_LINE_SIZE ) {
+
+			// If needed, store cursor postion within word
+			if ( cidx == lbufc ) {
+				wbufc = wbufsz;
+				wbufcflag = true;
+			}
+
+			// Add next char to word buffer
+			wordbuf[wbufsz++] = linebuf[cidx];
+		}
+
+		// If current char is a separator (RET, SPACE or EOF) process word
+		if (	( linebuf[cidx] == TEXTSTORE_CHAR_SPACE ) ||
+				( linebuf[cidx] == TEXTSTORE_CHAR_RET ) ||
+				( cidx == lbufsz - 1 ) ) {
+
+			// If current line + current word does not fit into current line
+			if ( wbufsz + textstore.lsize[lidx] > TEXTSTORE_LINE_SIZE ) {
+				
+				// Increment current line 
+				if ( ++lidx >= lidxstop ) {
+
+					// Insert new line if we past the last scanned line
+					if ( textstore_insert_line( lidx ) ) {
+						return false;
+					}
+				}
+				else {
+
+					// Erase current line
+					textstore_clear_line( lidx );
+				}
+			}
+
+			// Update cursor horizontal position
+			if ( wbufcflag ) {
+				textedit_cur_x = textstore.lsize[lidx] + wbufc;
+			}
+
+			// Copy current word into current line
+			textstore_insert_chars( lidx, textstore.lsize[lidx], wordbuf, wbufsz );
+
+			// If current char is RET, 
+			// or line size is equal to max line size
+			// proceed to next line
+			if ( 	( linebuf[cidx] == TEXTSTORE_CHAR_RET ) || 
+					( textstore.lsize[lidx] == TEXTSTORE_LINE_SIZE ) ) {
+
+				// Increment current line 
+				if ( ++lidx >= lidxstop ) {
+
+					// Insert new line if we past the last scanned line
+					if ( textstore_insert_line( lidx ) ) {
+						return false;
+					}
+				}
+				else {
+
+					// Erase current line
+					textstore_clear_line( lidx );
+				}
+
+				// Update cursor horizontal position
+				if ( wbufcflag ) {
+					textedit_cur_x = 0;
+				}
+			}
+
+			// If cursor flag set, update vertical position
+			if ( wbufcflag ) {
+				
+				// Save current line into vertical pointer
+				textedit_lpntr = lidx;
+
+				// Toggle cursor flag
+				wbufcflag = false;
+			}
+
+			// Reset current word size
+			wbufsz = 0;
+		}
+	}
+
+	// Check if cursor should be appened after the text
+	if ( lbufc == lbufsz ) {
+		textedit_lpntr = lidx;
+		textedit_cur_x = textstore.lsize[lidx];
+	}
+
+	// Update vertical screen pointers
+	if ( textedit_lpntr < textedit_spntr ) {
+		textedit_spntr = textedit_lpntr;
+	}
+	if ( textedit_lpntr >= textedit_spntr + TEXTEDIT_EDITORSCR_SZ ) {
+		textedit_spntr = textedit_lpntr - TEXTEDIT_EDITORSCR_SZ + 1;
+	}
+	textedit_cur_y = textedit_lpntr - textedit_spntr + TEXTEDIT_EDITORSCR_BASE;
+
+	// Reformat the remainder of the text
+	textstore_reformat( lidx );
+
+	// Refresh whole screen
+	textedit_screen_refresh( );
+
+	return true;
 }

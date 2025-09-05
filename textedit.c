@@ -293,13 +293,13 @@ void textedit_event( uint8_t c ) {
 
 		// Toggle the screensaver flag
 		case TEXTEDIT_CTRL_N:
-			textedit_sc_enable = !textedit_sc_enable;
-			if ( textedit_sc_enable ) {
-				textedit_status_popup( "SCREENSAVER ENABLED" );
-			}
-			else {
-				textedit_status_popup( "SCREENSAVER DISABLED" );
-			}
+		textedit_sc_enable = !textedit_sc_enable;
+		if ( textedit_sc_enable ) {
+			textedit_status_popup( "SCREENSAVER ENABLED" );
+		}
+		else {
+			textedit_status_popup( "SCREENSAVER DISABLED" );
+		}
 		break;
 
 		// Toggle the inverted flag
@@ -340,8 +340,6 @@ void textedit_event( uint8_t c ) {
 		// Keyboard buffer flush
 		cgetc( );
 
-		// Refresh text portion of the screen
-		textedit_screen_refresh( );
 		break;
 
 		case TEXTEDIT_CTRL_S:
@@ -436,8 +434,6 @@ void textedit_event( uint8_t c ) {
 		textedit_lpntr = textedit_spntr;
 		// Update cursor horizontal position at the begin of the line
 		textedit_cur_x = 0;
-		// Refresh text portion of the screen
-		textedit_screen_refresh( );
 		break;
 
 		// Page down
@@ -460,8 +456,6 @@ void textedit_event( uint8_t c ) {
 		textedit_lpntr = textedit_spntr + TEXTEDIT_EDITORSCR_SZ - 1;
 		// Update cursor horizontal position at the end of the line
 		textedit_cur_x = textstore.lsize[textedit_lpntr];
-		// Refresh text portion of the screen
-		textedit_screen_refresh( );
 		break;
 
 		case TEXTEDIT_KEY_ESC:
@@ -519,8 +513,6 @@ void textedit_event( uint8_t c ) {
 				textedit_saved_flag = false;
 			}
 		}
-		// Refresh text portion of the screen
-		textedit_screen_refresh( );
 		break;
 
 		case TEXTEDIT_CTRL_V:
@@ -552,8 +544,6 @@ void textedit_event( uint8_t c ) {
 		}
 		// Update x cursor
 		textedit_cur_x = textstore.lsize[textedit_lpntr];
-		// Refresh text portion of the screen
-		textedit_screen_refresh( );
 		break;
 
 		case TEXTEDIT_ARROW_RIGHT:
@@ -615,8 +605,6 @@ void textedit_event( uint8_t c ) {
 		}
 		// Adjust cursor position in case its at the right of a CRLF
 		textedit_adjust_cursor( );
-		// Refresh text portion of the screen
-		textedit_screen_refresh( );
 		break;
 
 		case TEXTEDIT_ARROW_DOWN:
@@ -639,31 +627,27 @@ void textedit_event( uint8_t c ) {
 		}
 		// Adjust cursor position in case its at the right of a CRLF
 		textedit_adjust_cursor( );
-		// Refresh text portion of the screen
-		textedit_screen_refresh( );
 		break;
 
 		case TEXTEDIT_KEY_DEL:
 		if ( textedit_insert( textedit_lpntr, textedit_cur_x, c ) == false ) {
-			// Refresh text portion of the screen
-			textedit_screen_refresh( );
 			atmos_ping( );
 		}
 		else {
 			// Update saved flag
 			textedit_saved_flag = false;
+			goto textedit_skip_screen_refresh;
 		}
 		break;
 
 		case TEXTEDIT_KEY_RET:
 		if ( textedit_insert( textedit_lpntr, textedit_cur_x, TEXTSTORE_CHAR_RET ) == false ) {
-			// Refresh text portion of the screen
-			textedit_screen_refresh( );
 			atmos_ping( );
 		}
 		else {
 			// Update saved flag
 			textedit_saved_flag = false;
+			goto textedit_skip_screen_refresh;
 		}
 		break;
 
@@ -731,15 +715,19 @@ void textedit_event( uint8_t c ) {
 		// Insert char
 		if ( textedit_insert( textedit_lpntr, textedit_cur_x, c ) == false ) {
 			atmos_ping( );
-			// Refresh text portion of the screen
-			textedit_screen_refresh( );
 		}
 		else {
 			// Update saved flag
 			textedit_saved_flag = false;
+			goto textedit_skip_screen_refresh;
 		}
 		break;
 	}
+
+	// Refresh text portion of the screen
+	textedit_screen_refresh( );
+
+	textedit_skip_screen_refresh:
 
 	// Refresh status line
 	textedit_status_refresh( );
@@ -851,7 +839,8 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 	}
 
 	// Check for shortcuts
-	if ( 	( textstore.lsize[lpos] < TEXTSTORE_LINE_SIZE - 1 ) &&
+	if ( 	( textstore.lsize[lpos] > 0 ) &&
+			( textstore.lsize[lpos] < TEXTSTORE_LINE_SIZE - 1 ) &&
 			( c != TEXTEDIT_KEY_DEL ) &&
 			( c != TEXTSTORE_CHAR_SPACE ) &&
 			( c != TEXTSTORE_CHAR_RET ) ) {
@@ -959,9 +948,10 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 			wordbuf[wbufsz++] = linebuf[cidx];
 		}
 
-		// If current char is a separator (RET, SPACE or EOF) process word
+		// If current char is RET or SPACE, if wordbuf full or end of linebuf, process word
 		if (	( linebuf[cidx] == TEXTSTORE_CHAR_SPACE ) ||
 				( linebuf[cidx] == TEXTSTORE_CHAR_RET ) ||
+				( wbufsz == TEXTSTORE_LINE_SIZE ) ||
 				( cidx == lbufsz - 1 ) ) {
 
 			// If current line + current word does not fit into current line

@@ -838,18 +838,20 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 		return false;
 	}
 
-	// Check for shortcuts
-	if ( 	( textstore.lsize[lpos] > 0 ) &&
+	// If we are appending and not at the boudndaries of the line, take shortcut
+	if ( 	( cpos == textstore.lsize[lpos] ) &&
+			( lpos == textstore.nblines - 1 ) &&
+			( textstore.lsize[lpos] > 0 ) &&
 			( textstore.lsize[lpos] < TEXTSTORE_LINE_SIZE - 1 ) &&
 			( c != TEXTEDIT_KEY_DEL ) &&
-			( c != TEXTSTORE_CHAR_SPACE ) &&
 			( c != TEXTSTORE_CHAR_RET ) ) {
+
 		// Insert char
 		textstore_insert_char( lpos, cpos, c );
 		// Increment cursor horizontal position
 		textedit_cur_x++;
 		// Refresh only this line
-		libscreen_copyline( textedit_cur_y, textstore.tlpt[textedit_lpntr] );
+		libscreen_copyline( textedit_cur_y, textstore.tlpt[lpos] );
 		return true;
 	}
 	
@@ -892,6 +894,11 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 		}
 	}
 
+	// Limit the cursor position to the boundary
+	if ( lbufc > lbufsz ) {
+		lbufc = lbufsz;
+	}
+
 	// If typed char is DEL, remove a char
 	if ( c == TEXTEDIT_KEY_DEL ) {
 		if ( lbufc ) {
@@ -912,6 +919,7 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 	}
 	// Every other typed chars should be inserted
 	else {
+
 		// Move the chars starting form the cursor one step right
 		// If cursor is at the end of the buffer, do nothing
 		memmove( &linebuf[lbufc+1], &linebuf[lbufc], lbufsz - lbufc );
@@ -980,11 +988,8 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 			// Copy current word into current line
 			textstore_insert_chars( lidx, textstore.lsize[lidx], wordbuf, wbufsz );
 
-			// If current char is RET, 
-			// or line size is equal to max line size
-			// proceed to next line
-			if ( 	( linebuf[cidx] == TEXTSTORE_CHAR_RET ) || 
-					( textstore.lsize[lidx] == TEXTSTORE_LINE_SIZE ) ) {
+			// If current char is RET, proceed to next line and CR
+			if ( linebuf[cidx] == TEXTSTORE_CHAR_RET ) {
 
 				// Increment current line 
 				if ( ++lidx >= lidxstop ) {
@@ -1021,6 +1026,11 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 		}
 	}
 
+	// Check if a line should be removed
+	if ( lidx < lidxstop - 1 ) {
+		textstore_del_line( lidx + 1 );
+	}
+
 	// Check if cursor should be appened after the text
 	if ( lbufc == lbufsz ) {
 		textedit_lpntr = lidx;
@@ -1037,7 +1047,8 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 	textedit_cur_y = textedit_lpntr - textedit_spntr + TEXTEDIT_EDITORSCR_BASE;
 
 	// Reformat the remainder of the text
-	textstore_reformat( lidx );
+	if ( lidx < textstore.nblines - 1 )
+	textstore_reformat( lidx + 1 );
 
 	// Refresh whole screen
 	textedit_screen_refresh( );

@@ -470,8 +470,7 @@ int8_t textstore_reformat( uint16_t line_nb ) {
 
 	// Nothing to move upwards
 	if ( 	( j == 0 ) || 
-			( j >= textstore.nblines ) ||
-			( textstore.tlpt[j-1][textstore.lsize[j-1]-1] == TEXTSTORE_CHAR_RET ) ) {
+			( j >= textstore.nblines ) ) {
 		return 0;
 	}
 
@@ -479,13 +478,14 @@ int8_t textstore_reformat( uint16_t line_nb ) {
 	do {
 		ret = textstore_move_first_words_up( j );
 
-		if ( ret == 0 ) {
-			break;
-		}
-
 		// If on the current line, store the nb of chars that have been moved
 		if ( j == line_nb ) {
 			i = ret;
+		}
+
+		// If no characters moved, stop
+		if ( !ret ) {
+			break;
 		}
 
 		// If CRLF at the end of the current line, end

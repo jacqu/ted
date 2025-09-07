@@ -19,6 +19,8 @@
 
 #define 		TEXTEDIT_UNUSED(x) (void)(x)
 
+uint8_t			*textedit_retc_a = (uint8_t*)TEXTEDIT_RET_CHAR_ADDRESS;
+uint8_t			textedit_retc_i[TEXTEDIT_ORIC_CHARS_HEIGHT];
 uint8_t			textedit_cur_x = 0;
 uint8_t			textedit_cur_y = TEXTEDIT_EDITORSCR_BASE;
 uint16_t		textedit_lpntr = TEXTEDIT_TEXT_BASE;
@@ -33,6 +35,29 @@ char*			textedit_password = NULL;
 uint32_t 		textedit_sc_counter;
 bool			textedit_sc_enable = true;
 
+// Redefine RET char
+void textedit_ret_redef( void ) {
+	const uint8_t newret[TEXTEDIT_ORIC_CHARS_HEIGHT] = { 0, 2, 2, 2, 10, 30, 8, 0 };
+	uint8_t i;
+
+	// Store initial char shape before modifying it
+	for( i = 0; i < TEXTEDIT_ORIC_CHARS_HEIGHT; i++ ) {
+		textedit_retc_i[i] = textedit_retc_a[i];
+		textedit_retc_a[i] = newret[i];
+	}
+
+}
+
+// Restore RET as original
+void textedit_ret_restore( void ) {
+	uint8_t i;
+
+	// Restore initial shape
+	for( i = 0; i < TEXTEDIT_ORIC_CHARS_HEIGHT; i++ ) {
+		textedit_retc_a[i] = textedit_retc_i[i];
+	}
+}
+
 // Exit cleanly
 void textedit_exit( void ) {
 
@@ -43,6 +68,9 @@ void textedit_exit( void ) {
 	if ( textedit_password ) {
 		memset( textedit_password, 0, ED_PW_MAX_LENGTH );
 	}
+	
+	// Restore RET shape
+	textedit_ret_restore( );
 
 	// Clear screen including the status bar
 	liboric_basic( "HIRES" );
@@ -186,6 +214,9 @@ void textedit_init( char* filename, char* password ) {
 		default:
 		ed_fatal_error( __FILE__, __LINE__ );
 	}
+
+	// Redefine RET char
+	textedit_ret_redef( );
 
 	// Clear screen
 	libscreen_clear( LIBSCREEN_SPACE );
@@ -882,8 +913,7 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 		memcpy( &linebuf[lbufsz], textstore.tlpt[lidx], textstore.lsize[lidx] );
 
 		// Update line buffer size
-		lbufsz += textstore.lsize[lidx];
-		
+		lbufsz += textstore.lsize[lidx];	
 
 		// Update cursor position within line buffer
 		if ( lidx < lpos ) {
@@ -1035,7 +1065,27 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 	if ( lbufc == lbufsz ) {
 		textedit_lpntr = lidx;
 		textedit_cur_x = textstore.lsize[lidx];
+
+		// Check if cursor went over the limit of the line
+		if ( textedit_cur_x >= TEXTSTORE_LINE_SIZE ) {
+
+			// Insert new line
+			if ( textstore_insert_line( lidx + 1 ) ) {
+				return false;
+			}
+
+			// Update cursor position
+			textedit_cur_x = 0;
+			textedit_lpntr = lidx + 1;
+		}
 	}
+
+	// Sanity check
+	#ifdef ED_DEBUG
+	if ( ( textedit_cur_x >= TEXTSTORE_LINE_SIZE ) || ( textedit_lpntr >= textstore.nblines ) ) {
+		ed_fatal_error( __FILE__, __LINE__ );
+	}
+	#endif
 
 	// Update vertical screen pointers
 	if ( textedit_lpntr < textedit_spntr ) {

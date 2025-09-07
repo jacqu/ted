@@ -64,6 +64,11 @@
 #define TEXTEDIT_UI_NO_ANSWER		'n'				// Character for the NO answer
 #define TEXTEDIT_UI_CA_ANSWER		'c'				// Character for the CANCEL answer
 
+// Char redefinition
+#define TEXTEDIT_ORIC_BASE_CHARSET	0xB400			// Char definition base address
+#define TEXTEDIT_ORIC_CHARS_HEIGHT	8				// Char height in pixel
+#define TEXTEDIT_RET_CHAR_ADDRESS	(TEXTEDIT_ORIC_BASE_CHARSET+TEXTSTORE_CHAR_RET*TEXTEDIT_ORIC_CHARS_HEIGHT)
+
 // Misc
 #define TEXTEDIT_CANCEL				2				// Cancel return code
 #define TEXTEDIT_TABSZ				4				// Tab size
@@ -81,6 +86,8 @@ extern bool							textedit_sc_enable;
 													// Screen saver flag
 
 // Function prototypes
+void 	textedit_ret_redef		( void );
+void 	textedit_ret_restore	( void );
 void 	textedit_exit			( void );
 void 	textedit_init			( char*, char* );
 void 	textedit_status_print	( char* );

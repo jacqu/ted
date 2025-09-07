@@ -24,7 +24,7 @@
 #define ED_CAPS_ADDRESS			0x26A
 #define ED_CAPS_UPPER			0
 #define ED_CAPS_LOWER			16
-#define ED_PRINT_BLUE_PAPER		"PRINT CHR$(27);CHR$(84);"
+#define ED_PRINT_BLUE_PAPER		"PRINT CHR$(27);CHR$(84);"	
 
 uint16_t 	*ed_timer_a = (uint16_t*)ED_TIMER_ADDRESS;
 uint16_t 	ed_timer = 0;

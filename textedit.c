@@ -289,9 +289,6 @@ uint8_t	textedit_status_YN( char *msg ) {
 }
 
 void textedit_mem_full( void ) {
-	
-	// Produce a "ping" sound
-	atmos_ping();
 
 	// Display a temporary message in status line
 	textedit_status_popup( "MEMORY FULL!" );
@@ -553,6 +550,7 @@ void textedit_event( uint8_t c ) {
 		}
 		// Line available ?
 		if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
+			atmos_ping();
 			textedit_mem_full( );
 			break;
 		}
@@ -866,16 +864,17 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 	// If there is no more line left and the char is not DEL, refuse insertion
 	if ( 	( textstore.nblines == TEXTSTORE_LINES_MAX ) && 
 			( c != TEXTEDIT_KEY_DEL ) ) {
+		textedit_mem_full( );
 		return false;
 	}
 
-	// If we are appending and not at the boudndaries of the line, take shortcut
-	if ( 	( cpos == textstore.lsize[lpos] ) &&
-			( lpos == textstore.nblines - 1 ) &&
-			( textstore.lsize[lpos] > 0 ) &&
+	// If we are appending and not at the boudndaries of the line, take a shortcut
+	if ( 	( textstore.lsize[lpos] > 0 ) &&
 			( textstore.lsize[lpos] < TEXTSTORE_LINE_SIZE - 1 ) &&
 			( c != TEXTEDIT_KEY_DEL ) &&
-			( c != TEXTSTORE_CHAR_RET ) ) {
+			( c != TEXTSTORE_CHAR_RET ) &&
+			( ( ( cpos > 0 ) && ( cpos < textstore.lsize[lpos] - 1 ) ) || 
+			( ( cpos == textstore.lsize[lpos] ) && ( lpos == textstore.nblines - 1 ) ) ) ) {
 
 		// Insert char
 		textstore_insert_char( lpos, cpos, c );
@@ -1000,6 +999,7 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 
 					// Insert new line if we past the last scanned line
 					if ( textstore_insert_line( lidx ) ) {
+						textedit_mem_full( );
 						return false;
 					}
 				}
@@ -1026,6 +1026,7 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 
 					// Insert new line if we past the last scanned line
 					if ( textstore_insert_line( lidx ) ) {
+						textedit_mem_full( );
 						return false;
 					}
 				}
@@ -1071,6 +1072,7 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 
 			// Insert new line
 			if ( textstore_insert_line( lidx + 1 ) ) {
+				textedit_mem_full( );
 				return false;
 			}
 

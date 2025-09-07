@@ -30,10 +30,17 @@ uint16_t 	*ed_timer_a = (uint16_t*)ED_TIMER_ADDRESS;
 uint16_t 	ed_timer = 0;
 
 // Fatal error exit
+#ifdef ED_VERBOSE
 void ed_fatal_error( char* msg, uint32_t line ) {
 	fprintf( stderr, "PANIC: %s:%lu\n", msg, (unsigned long)line );
 	exit( ED_FATAL_ERROR );
 }
+#else
+void ed_fatal_error( char* msg ) {
+	fprintf( stderr, "PANIC: %s\n", msg );
+	exit( ED_FATAL_ERROR );
+}
+#endif
 
 // Initialize timer
 void ed_init_timer( void ) {

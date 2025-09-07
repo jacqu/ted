@@ -165,7 +165,11 @@ void textedit_init( char* filename, char* password ) {
 	// Sanity check
 	#ifdef ED_DEBUG
 	if ( !filename ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "E0" );
+		#endif
 	}
 	#endif
 	textedit_filename = filename;
@@ -197,7 +201,11 @@ void textedit_init( char* filename, char* password ) {
 
 		// Check file validity
 		if ( textstore.magic != TEXTSTORE_MAGIC ) {
-			ed_fatal_error( __FILE__, __LINE__ );
+			#ifdef ED_VERBOSE
+			ed_fatal_error( "BAD MAGIC NUMBER " __FILE__, __LINE__ );
+			#else
+			ed_fatal_error( "BAD MAGIC NUMBER" );
+			#endif
 		}
 		break;
 		
@@ -207,12 +215,20 @@ void textedit_init( char* filename, char* password ) {
 
 		// Allocate first line of text
 		if ( textstore_insert_line( TEXTEDIT_TEXT_BASE ) ) {
+			#ifdef ED_VERBOSE
 			ed_fatal_error( __FILE__, __LINE__ );
+			#else
+			printf( "E1" );
+			#endif
 		}
 		break;
 
 		default:
-		ed_fatal_error( __FILE__, __LINE__ );
+		#ifdef ED_VERBOSE
+		ed_fatal_error( "SEDORIC ERROR " __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "SEDORIC ERROR" );
+		#endif
 	}
 
 	// Redefine RET char
@@ -548,15 +564,11 @@ void textedit_event( uint8_t c ) {
 		if ( !textedit_copy_buf_sz ) {
 			break;
 		}
-		// Line available ?
-		if ( textstore.nblines >= TEXTSTORE_LINES_MAX ) {
+		// Insert a new line
+		if ( textstore_insert_line( textedit_lpntr ) ) {
 			atmos_ping();
 			textedit_mem_full( );
 			break;
-		}
-		// Insert a new line
-		if ( textstore_insert_line( textedit_lpntr ) ) {
-			ed_fatal_error( __FILE__, __LINE__ );
 		}
 		// Paste buffer to the new line
 		textstore_write_chars( textedit_lpntr, 0, textedit_copy_buf, textedit_copy_buf_sz );
@@ -796,7 +808,11 @@ void textedit_status_refresh( void ) {
 	static char normal[] = "STD";
 
 	if ( textedit_filename == NULL ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		printf( "E2" );
+		#endif
 	}
 
 	if ( textedit_saved_flag ) {
@@ -904,7 +920,11 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 		// Sanity check
 		#ifdef ED_DEBUG
 		if ( lbufsz + textstore.lsize[lidx] > TEXTEDIT_INSBUFSCAN*TEXTSTORE_LINE_SIZE ) {
+			#ifdef ED_VERBOSE
 			ed_fatal_error( __FILE__, __LINE__ );
+			#else
+			printf( "E3" );
+			#endif
 		}
 		#endif
 
@@ -1085,7 +1105,11 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 	// Sanity check
 	#ifdef ED_DEBUG
 	if ( ( textedit_cur_x >= TEXTSTORE_LINE_SIZE ) || ( textedit_lpntr >= textstore.nblines ) ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "E4" );
+		#endif
 	}
 	#endif
 

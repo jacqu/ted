@@ -78,7 +78,11 @@ uint8_t textstore_insert_line( uint16_t line_nb ) {
 	// Sanity check
 	#ifdef ED_DEBUG
 	if ( line_nb > textstore.nblines ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "S0" );
+		#endif
 	}
 	#endif
 
@@ -120,7 +124,11 @@ void textstore_del_line( uint16_t line_nb ) {
 	// Sanity check
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "S1" );
+		#endif
 	}
 	#endif
 
@@ -130,7 +138,11 @@ void textstore_del_line( uint16_t line_nb ) {
 	// Sanity check
 	#ifdef ED_DEBUG
 	if ( textstore.ptflag[i] == TEXTSTORE_LINEPT_FREE ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "S2" );
+		#endif
 	}
 	#endif
 
@@ -154,10 +166,18 @@ void textstore_insert_char( uint16_t line_nb, uint8_t char_nb, uint8_t char_c ) 
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "S3" );
+		#endif
 	}
 	if ( char_nb > textstore.lsize[line_nb] ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "S4" );
+		#endif
 	}
 	#endif
 
@@ -183,10 +203,18 @@ void textstore_del_char( uint16_t line_nb, uint8_t char_nb ) {
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "S5" );
+		#endif
 	}
 	if ( char_nb >= textstore.lsize[line_nb] ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "S6" );
+		#endif
 	}
 	#endif
 
@@ -210,10 +238,18 @@ void textstore_insert_chars( uint16_t line_nb, uint8_t char_nb, uint8_t *chars, 
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "S7" );
+		#endif
 	}
 	if ( char_nb > textstore.lsize[line_nb] ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "S8" );
+		#endif
 	}
 	#endif
 
@@ -244,10 +280,18 @@ void textstore_del_chars( uint16_t line_nb, uint8_t char_nb, uint8_t chars_nb ) 
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "S9" );
+		#endif
 	}
 	if ( char_nb >= textstore.lsize[line_nb] ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "SA" );
+		#endif
 	}
 	#endif
 
@@ -273,10 +317,18 @@ void textstore_write_chars( uint16_t line_nb, uint8_t char_nb, uint8_t *chars, u
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "SB" );
+		#endif
 	}
 	if ( char_nb >= TEXTSTORE_LINE_SIZE ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "SC" );
+		#endif
 	}
 	#endif
 
@@ -298,10 +350,18 @@ void textstore_replace_line( uint16_t line_nb, uint8_t *chars, uint8_t chars_nb 
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "SD" );
+		#endif
 	}
 	if ( chars_nb >= TEXTSTORE_LINE_SIZE ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "SE" );
+		#endif
 	}
 	#endif
 
@@ -321,7 +381,11 @@ void textstore_clear_line( uint16_t line_nb ) {
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( line_nb >= textstore.nblines ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "SF" );
+		#endif
 	}
 	#endif
 
@@ -508,7 +572,11 @@ int8_t textstore_move_first_words_up( uint16_t line_nb ) {
 	// Sanity checks
 	#ifdef ED_DEBUG
 	if ( ( line_nb >= textstore.nblines ) || ( line_nb == 0 ) ) {
+		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "SG" );
+		#endif
 	}
 	#endif
 

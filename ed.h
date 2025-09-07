@@ -7,6 +7,7 @@
 
 // Master debug switch: toggle on to activate sanity checks
 #define ED_DEBUG
+#define ED_VERBOSE							// Toggle verbose outputs
 
 // Usefull macros
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -25,6 +26,10 @@
 #define ED_NO_ERROR				0
 
 // Primitives of public functions
+#ifdef ED_VERBOSE
 void ed_fatal_error	( char*, uint32_t );
+#else
+void ed_fatal_error	( char* );
+#endif
 
 #endif /* __ED_H__ */

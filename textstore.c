@@ -585,6 +585,12 @@ int8_t textstore_move_first_words_up( uint16_t line_nb ) {
 		return 0;
 	}
 
+	// If previous line is empty, delete line
+	if ( textstore.lsize[line_nb-1] == 0 ) {
+		textstore_del_line( line_nb - 1 );
+		return 0;
+	}
+
 	// Find the next word boundary of line n starting from the right
 	for ( i = textstore.lsize[line_nb] - 1; i >= 0; i-- ) {
 		// Check at each boundary if it fits

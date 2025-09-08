@@ -589,7 +589,8 @@ void textedit_event( uint8_t c ) {
 
 		case TEXTEDIT_ARROW_RIGHT:
 		if ( 	( textedit_cur_x < textstore.lsize[textedit_lpntr] ) &&
-				( textedit_cur_x != TEXTSTORE_LINE_SIZE - 1 ) ) {
+				( textedit_cur_x != TEXTSTORE_LINE_SIZE - 1 ) &&
+				( textstore.tlpt[textedit_lpntr][textedit_cur_x] != TEXTSTORE_CHAR_RET ) ) {
 			// Update x cursor
 			textedit_cur_x++;
 		}
@@ -1030,15 +1031,26 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 				}
 			}
 
-			// Update cursor horizontal position
+			// Update cursor position
 			if ( wbufcflag ) {
+
+				// Save horizontal position
 				textedit_cur_x = textstore.lsize[lidx] + wbufc;
+
+				// Save current line into vertical pointer
+				textedit_lpntr = lidx;
+
+				// Toggle cursor flag
+				wbufcflag = false;
 			}
 
 			// Copy current word into current line
 			textstore_insert_chars( lidx, textstore.lsize[lidx], wordbuf, wbufsz );
 
-			// If current char is RET, proceed to next line and CR
+			// If current word is terminated by RET
+			// NB: cursor position should not be updated since
+			// the CRLF is after the cursor position which
+			// is within the inserted word
 			if ( linebuf[cidx] == TEXTSTORE_CHAR_RET ) {
 
 				// Increment current line 
@@ -1055,21 +1067,6 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 					// Erase current line
 					textstore_clear_line( lidx );
 				}
-
-				// Update cursor horizontal position
-				if ( wbufcflag ) {
-					textedit_cur_x = 0;
-				}
-			}
-
-			// If cursor flag set, update vertical position
-			if ( wbufcflag ) {
-				
-				// Save current line into vertical pointer
-				textedit_lpntr = lidx;
-
-				// Toggle cursor flag
-				wbufcflag = false;
 			}
 
 			// Reset current word size
@@ -1084,11 +1081,13 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 
 	// Check if cursor should be appened after the text
 	if ( lbufc == lbufsz ) {
+
+		// Place the cursor on the current line
 		textedit_lpntr = lidx;
 		textedit_cur_x = textstore.lsize[lidx];
 
 		// Check if cursor went over the limit of the line
-		if ( textedit_cur_x >= TEXTSTORE_LINE_SIZE ) {
+		if ( ( textedit_cur_x >= TEXTSTORE_LINE_SIZE ) ) {
 
 			// Insert new line
 			if ( textstore_insert_line( lidx + 1 ) ) {
@@ -1123,8 +1122,9 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 	textedit_cur_y = textedit_lpntr - textedit_spntr + TEXTEDIT_EDITORSCR_BASE;
 
 	// Reformat the remainder of the text
-	if ( lidx < textstore.nblines - 1 )
-	textstore_reformat( lidx + 1 );
+	if ( lidx < textstore.nblines - 1 ) {
+		textstore_reformat( lidx + 1 );
+	}
 
 	// Refresh whole screen
 	textedit_screen_refresh( );

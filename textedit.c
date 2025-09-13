@@ -73,8 +73,10 @@ void textedit_exit( void ) {
 	textedit_ret_restore( );
 
 	// Clear screen including the status bar
-	liboric_basic( "HIRES" );
-	liboric_basic( "TEXT" );
+	libscreen_clear( LIBSCREEN_SPACE );
+
+	// Reset cursor position
+	liboric_basic( "CLS" );
 
 	// Exit without error
 	exit ( ED_NO_ERROR );
@@ -370,9 +372,11 @@ void textedit_event( uint8_t c ) {
 							27, (uint8_t*)"                       (c) SYNTAXIC 2025" );
 		
 		// Active wait and launch of a screensaver after a while
-		textedit_sc_counter = TEXTEDIT_SCREENSAVER_TO;
-		while ( !kbhit() ) {
-			textedit_screensaver( );
+		if ( textedit_sc_enable ) {
+			textedit_sc_counter = TEXTEDIT_SCREENSAVER_TO;
+			while ( !kbhit() ) {
+				textedit_screensaver( );
+			}
 		}
 
 		// Keyboard buffer flush

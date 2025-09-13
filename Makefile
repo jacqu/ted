@@ -10,11 +10,11 @@ EMULATE    ?= /usr/bin/open -n /Applications/Clock\ Signal.app
 C_SOURCES  = chacha20_c.c textstore.c textedit.c liboric_c.c libscreen.c ed.c
 A_SOURCES  = liboric.s chacha20.s
 PROGRAM    = ted
-INIT       = 'CLS:PRINT CHR$$(20):TED'
+INIT       = 'CLS:PRINT CHR$$(20):GRAB:TED'
 START      = 1536
 SYMBOLS    = sym
 
-MAJOR_VER  = 1.1
+MAJOR_VER  = 2.0
 VERSION    = "$(MAJOR_VER).$(shell date '+%y%m%d%H')"
 
 CC65       ?= $(CC65_HOME)/bin/cc65

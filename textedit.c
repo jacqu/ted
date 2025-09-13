@@ -201,11 +201,8 @@ void textedit_init( char* filename, char* password ) {
 
 		// Check file validity
 		if ( textstore.magic != TEXTSTORE_MAGIC ) {
-			#ifdef ED_VERBOSE
-			ed_fatal_error( "BAD MAGIC NUMBER " __FILE__, __LINE__ );
-			#else
-			ed_fatal_error( "BAD MAGIC NUMBER" );
-			#endif
+			fprintf( stderr, "BAD MAGIC NUMBER\n" );
+			exit( ED_FATAL_ERROR );
 		}
 		break;
 		
@@ -224,11 +221,8 @@ void textedit_init( char* filename, char* password ) {
 		break;
 
 		default:
-		#ifdef ED_VERBOSE
-		ed_fatal_error( "SEDORIC ERROR " __FILE__, __LINE__ );
-		#else
-		ed_fatal_error( "SEDORIC ERROR" );
-		#endif
+		fprintf( stderr, "SEDORIC ERROR\n" );
+		exit( ED_FATAL_ERROR );
 	}
 
 	// Redefine RET char

@@ -35,6 +35,16 @@ char*			textedit_password = NULL;
 uint32_t 		textedit_sc_counter;
 bool			textedit_sc_enable = true;
 
+// Backup old RET shape
+void textedit_ret_bak( void ) {
+	uint8_t i;
+
+	// Store initial char shape before modifying it
+	for( i = 0; i < TEXTEDIT_ORIC_CHARS_HEIGHT; i++ ) {
+		textedit_retc_i[i] = textedit_retc_a[i];
+	}
+}
+
 // Redefine RET char
 void textedit_ret_redef( void ) {
 	const uint8_t newret[TEXTEDIT_ORIC_CHARS_HEIGHT] = { 0, 2, 2, 2, 10, 30, 8, 0 };
@@ -42,10 +52,14 @@ void textedit_ret_redef( void ) {
 
 	// Store initial char shape before modifying it
 	for( i = 0; i < TEXTEDIT_ORIC_CHARS_HEIGHT; i++ ) {
-		textedit_retc_i[i] = textedit_retc_a[i];
 		textedit_retc_a[i] = newret[i];
 	}
+}
 
+// Blank RET char
+void textedit_ret_blank( void ) {
+
+	memset( textedit_retc_a, 0, TEXTEDIT_ORIC_CHARS_HEIGHT );
 }
 
 // Restore RET as original
@@ -228,6 +242,7 @@ void textedit_init( char* filename, char* password ) {
 	}
 
 	// Redefine RET char
+	textedit_ret_bak( );
 	textedit_ret_redef( );
 
 	// Clear screen
@@ -336,9 +351,11 @@ void textedit_event( uint8_t c ) {
 		textedit_sc_enable = !textedit_sc_enable;
 		if ( textedit_sc_enable ) {
 			textedit_status_popup( "SCREENSAVER ENABLED" );
+			textedit_ret_redef( );
 		}
 		else {
 			textedit_status_popup( "SCREENSAVER DISABLED" );
+			textedit_ret_blank(  );
 		}
 		break;
 

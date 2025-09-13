@@ -86,8 +86,10 @@ extern bool							textedit_sc_enable;
 													// Screen saver flag
 
 // Function prototypes
+void	textedit_ret_bak		( void );
 void 	textedit_ret_redef		( void );
 void 	textedit_ret_restore	( void );
+void 	textedit_ret_blank		( void );
 void 	textedit_exit			( void );
 void 	textedit_init			( char*, char* );
 void 	textedit_status_print	( char* );

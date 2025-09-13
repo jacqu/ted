@@ -342,9 +342,16 @@ void textedit_event( uint8_t c ) {
 		// Insert soft TAB
 		case TEXTEDIT_CTRL_Z:
 			for ( i = TEXTEDIT_TABSZ - ( textedit_cur_x % TEXTEDIT_TABSZ ); i > 0; i-- ) {
-				textedit_event( TEXTSTORE_CHAR_SPACE );
+				if ( textedit_insert( textedit_lpntr, textedit_cur_x, c ) == false ) {
+					atmos_ping( );
+					break;
+				}
+				else {
+					// Update saved flag
+					textedit_saved_flag = false;
+				}
 			}
-		break;
+		goto textedit_skip_screen_refresh;
 
 		// Toggle the screensaver flag
 		case TEXTEDIT_CTRL_N:

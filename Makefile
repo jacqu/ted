@@ -57,7 +57,7 @@ $(PROGRAM).hfe: $(PROGRAM).dsk
 	$(HXCFE) -finput:$(PROGRAM).dsk -conv:HXC_HFE -foutput:$(PROGRAM).hfe
 
 run: $(PROGRAM).hfe
-	$(EMULATE) $(PROGRAM).hfe
+	$(EMULATE) $(PROGRAM).dsk
 
 clean:
 	$(RM) $(C_SOURCES:.c=.i) $(C_SOURCES:.c=.o) $(A_SOURCES:.s=.o) $(PROGRAM) $(PROGRAM).tap $(PROGRAM).dsk $(PROGRAM).hfe $(SYMBOLS)

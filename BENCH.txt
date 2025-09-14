@@ -1,3 +1,6 @@
+// Text for video demonstration
+Oh boy, it took me a while to figure this out. I didn't expect implementing something as 'basic' as word wrapping in a text editor to be such a PITA!
+
 // Scattered line to check right formatting after del
 aaa bbb ccc ddd eee fff ggg hhh iii jjj
                                        ^j

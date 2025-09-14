@@ -45,9 +45,8 @@ void textedit_exit( void ) {
 		memset( textedit_password, 0, ED_PW_MAX_LENGTH );
 	}
 
-	// Clear screen including the status bar
-	liboric_basic( "HIRES" );
-	liboric_basic( "TEXT" );
+	// Reset Sedoric
+	liboric_basic( "RESET" );
 
 	// Exit without error
 	exit ( ED_NO_ERROR );

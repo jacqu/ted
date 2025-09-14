@@ -393,7 +393,7 @@ void textedit_event( uint8_t c ) {
 		libscreen_copyline( 25, (uint8_t*)"[CTRL]-Z: SOFT TAB  [CTRL]-N: SVR ON/OFF" );
 
 		libscreen_copyline_inv( 
-							27, (uint8_t*)"                       (c) SYNTAXIC 2025" );
+							27, (uint8_t*)"                                        " );
 		
 		// Active wait and launch of a screensaver after a while
 		if ( textedit_sc_enable ) {

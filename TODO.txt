@@ -1,4 +1,1 @@
-* Faire l'étiquette de la disquette
-* Faire la jacquette du boitier
-* Tester la taille max du mdp
-* Tester l'impression sur l'imprimante
+* Bug hunting until it's perfect

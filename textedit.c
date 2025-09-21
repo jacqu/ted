@@ -907,14 +907,29 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 		return false;
 	}
 
-	// If we are appending and not at the boudndaries of the line, take a shortcut
-	if ( 	( textstore.lsize[lpos] > 0 ) &&
-			( textstore.lsize[lpos] < TEXTSTORE_LINE_SIZE - 1 ) &&
-			( c != TEXTEDIT_KEY_DEL ) &&
-			( c != TEXTSTORE_CHAR_RET ) &&
-			( ( ( cpos > 0 ) && ( cpos < textstore.lsize[lpos] - 1 ) ) || 
-			( ( cpos == textstore.lsize[lpos] ) && ( lpos == textstore.nblines - 1 ) ) ) ) {
-
+	// If we are appending and not at the boundaries of the line, take a shortcut
+	// if ( 	( textstore.lsize[lpos] > 0 ) &&
+	// 		( textstore.lsize[lpos] < TEXTSTORE_LINE_SIZE - 1 ) &&
+	// 		( c != TEXTEDIT_KEY_DEL ) &&
+	// 		( c != TEXTSTORE_CHAR_RET ) &&
+	// 		( c != TEXTSTORE_CHAR_SPACE ) &&
+	// 		( ( ( cpos > 0 ) && ( cpos < textstore.lsize[lpos] - 1 ) ) || 
+	// 		( ( cpos == textstore.lsize[lpos] ) && ( lpos == textstore.nblines - 1 ) ) ) ) {
+	if ( 	
+			(
+				( lpos == textstore.nblines - 1 ) &&
+				( cpos == textstore.lsize[lpos] ) &&
+				( cpos > 0 ) && 
+				( cpos < textstore.lsize[lpos] - 1 )
+			) 
+			||
+			(
+				( textstore.lsize[lpos] < TEXTSTORE_LINE_SIZE - 1 ) &&
+				( c != TEXTEDIT_KEY_DEL ) &&
+				( c != TEXTSTORE_CHAR_RET ) &&
+				( c != TEXTSTORE_CHAR_SPACE ) 
+	 		) 
+		) {
 		// Insert char
 		textstore_insert_char( lpos, cpos, c );
 		// Increment cursor horizontal position

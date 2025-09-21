@@ -557,8 +557,7 @@ int8_t textstore_reformat( uint16_t line_nb ) {
 			break;
 		}
 
-	} while ( 	( ++j < textstore.nblines ) && 
-				( textstore.lsize[j] != 0 ) );
+	} while ( 	( ++j < textstore.nblines ) );
 
 	return i;
 }

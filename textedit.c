@@ -716,10 +716,6 @@ void textedit_event( uint8_t c ) {
 		break;
 
 		default:
-		// Replace pound char with plain char
-		if ( c == TEXTEDIT_KEY_POUND ) {
-			c = LIBSCREEN_PLAIN_CHAR;
-		}
 		// Check if value is within the ASCII printable range
 		if ( ( c < TEXTEDIT_ASCII_MIN ) || ( c > TEXTEDIT_ASCII_MAX ) ) {
 			// Check if value is a special code
@@ -762,12 +758,21 @@ void textedit_event( uint8_t c ) {
 				c = LIBSCREEN_BLUE_PAPER;
 				break;
 
-				case LIBSCREEN_PLAIN_CHAR:
-				break;
-
 				// Char is non printable and has not been identified as a valide special code
 				default:
 				goto textedit_skip_event;
+			}
+		}
+
+		// Dead key + color code from 0 to 7
+		if ( c == TEXTEDIT_KEY_POUND ) {
+			// Waiting for color key
+			c = cgetc( );
+			if ( ( c >= '0' ) && ( c <= '7' ) ) {
+				c = LIBSCREEN_BLACK_PAPER + ( c - '0' ); 
+			}
+			else {
+				c = LIBSCREEN_PLAIN_CHAR;
 			}
 		}
 

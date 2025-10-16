@@ -526,17 +526,18 @@ void textedit_event( uint8_t c ) {
 
 		case TEXTEDIT_KEY_ESC:
 		if ( !textedit_saved_flag ) {
-			i = textedit_status_YN( "QUIT WITHOUT SAVING?" );
+			i = textedit_status_YN( "SAVE BEFORE EXITING?" );
 			if (  i == true ) {
-				textedit_exit( );
-			}
-			else {
-				if ( i == TEXTEDIT_CANCEL )
-					break;
 				textedit_event( TEXTEDIT_CTRL_S );
 				if ( textedit_saved_flag ) {
 					textedit_exit( );
 				}
+			}
+			else {
+				if ( i == TEXTEDIT_CANCEL ) {
+					break;
+				}
+				textedit_exit( );
 			}
 		}
 		else {
@@ -1163,6 +1164,11 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 	// Reformat the remainder of the text
 	if ( lidx < textstore.nblines - 1 ) {
 		textstore_reformat( lidx + 1 );
+	}
+
+	// If last line is full, insert new line to make room for cursor
+	if ( textstore.lsize[textstore.nblines-1] == TEXTSTORE_LINE_SIZE ) {
+		textstore_insert_line( textstore.nblines );
 	}
 
 	// Refresh whole screen

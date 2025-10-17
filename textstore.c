@@ -478,6 +478,7 @@ void textstore_print ( uint8_t type ) {
 				case LIBSCREEN_RED_PAPER:
 				case LIBSCREEN_YELLOW_PAPER:
 				case LIBSCREEN_BLUE_PAPER:
+				case TEXTSTORE_CHAR_RET:
 				c = LIBSCREEN_SPACE;
 				break;
 				default:

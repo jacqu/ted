@@ -469,7 +469,7 @@ void textedit_event( uint8_t c ) {
 		if ( i == TEXTEDIT_CANCEL ) {
 			break;
 		}
-		textedit_status_print( "PRINTING.. (PRESS ANY KEY TO ABORT)" );
+		textedit_status_print( "PRINTING.. (PRESS ANY KEY TO PAUSE)" );
 		if ( i == true ) {
 			textstore_print( TEXTSTORE_PRINTER_MCP40 );
 		}

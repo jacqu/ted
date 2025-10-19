@@ -478,8 +478,9 @@ void textstore_print ( uint8_t type ) {
 				case LIBSCREEN_RED_PAPER:
 				case LIBSCREEN_YELLOW_PAPER:
 				case LIBSCREEN_BLUE_PAPER:
+				break;
 				case TEXTSTORE_CHAR_RET:
-				c = LIBSCREEN_SPACE;
+				continue;
 				break;
 				default:
 				// Check for invert bit
@@ -509,8 +510,13 @@ void textstore_print ( uint8_t type ) {
 			// Check for user abort
 			for ( k = 0; k < TEXTSTORE_KBHIT_SLEEP; k++ ) {
 				if ( kbhit( ) ) {
-					textedit_status_popup( "PRINTING ABORTED!" );
-					goto end_print;
+					if ( textedit_status_YN( "ABORT PRINTING?" ) == true ) {
+						textedit_status_popup( "PRINTING ABORTED!" );
+						goto end_print;
+					}
+					else {
+						textedit_status_popup( "RESUME PRINTING.." );
+					}
 				}
 			}
 		}

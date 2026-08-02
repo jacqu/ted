@@ -274,7 +274,7 @@ void textedit_status_print( char *msg ) {
 	// Display message
 	memset( textedit_status, LIBSCREEN_SPACE, LIBSCREEN_NB_COLS );
 	snprintf( textedit_status, LIBSCREEN_NB_COLS, "%s", msg );
-	textedit_status[strlen(msg)] = LIBSCREEN_SPACE;
+	textedit_status[strlen(textedit_status)] = LIBSCREEN_SPACE;
 	libscreen_copyline_inv( TEXTEDIT_STATUSSCR_BASE, (uint8_t*)textedit_status );
 }
 
@@ -284,7 +284,7 @@ void textedit_status_popup( char *msg ) {
 	// Display message
 	memset( textedit_status, LIBSCREEN_SPACE, LIBSCREEN_NB_COLS );
 	snprintf( textedit_status, LIBSCREEN_NB_COLS, "%s", msg );
-	textedit_status[strlen(msg)] = LIBSCREEN_SPACE;
+	textedit_status[strlen(textedit_status)] = LIBSCREEN_SPACE;
 	libscreen_copyline_inv( TEXTEDIT_STATUSSCR_BASE, (uint8_t*)textedit_status );
 
 	// Wait some time
@@ -297,6 +297,7 @@ uint8_t	textedit_status_YN( char *msg ) {
 	// Print question
 	memset( textedit_status, LIBSCREEN_SPACE, LIBSCREEN_NB_COLS );
 	snprintf( textedit_status, LIBSCREEN_NB_COLS, "%s (%c/%c/%c)", msg, TEXTEDIT_UI_YES_ANSWER, TEXTEDIT_UI_NO_ANSWER, TEXTEDIT_UI_CA_ANSWER );
+	textedit_status[strlen(textedit_status)] = LIBSCREEN_SPACE;
 	libscreen_copyline_inv( TEXTEDIT_STATUSSCR_BASE, (uint8_t*)textedit_status );
 
 	// Scan response
@@ -884,6 +885,7 @@ void textedit_status_refresh( void ) {
 				saved,
 				( textstore.nblines * 100 ) / TEXTSTORE_LINES_MAX,
 				state );
+	textedit_status[strlen(textedit_status)] = LIBSCREEN_SPACE;
 	libscreen_copyline( TEXTEDIT_STATUSSCR_BASE, (uint8_t*)textedit_status );
 }
 

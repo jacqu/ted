@@ -1061,7 +1061,7 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 	// Count the lines the reformatting below will need. Nothing may be
 	// erased before we know the text can be entirely rebuilt.
 	// Do this only if the text is nearing its maximum length.
-	if ( textstore.nblines >= TEXTSTORE_LINES_MAX - TEXTEDIT_INSBUFSCAN ) {
+	if ( textstore.nblines >= TEXTSTORE_LINES_MAX - 2 * TEXTEDIT_INSBUFSCAN ) {
 		nlines = 1;
 		fill = 0;
 		wsz = 0;

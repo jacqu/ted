@@ -195,7 +195,7 @@ void textedit_init( char* filename, char* password ) {
 	textstore_init( );
 
 	// Load file
-	snprintf( liboric_cmd, LIBORIC_MAX_CMD_SIZE, "LOAD\"%s\",A%u,N", textedit_filename, &textstore );
+	snprintf( liboric_cmd, LIBORIC_MAX_CMD_SIZE, "LOAD\"%s\",A%u,N", textedit_filename, (uint16_t)&textstore );
 	liboric_basic( liboric_cmd );
 	switch( liboric_error_nd( ) ) {
 		case SEDORIC_NO_ERROR:
@@ -231,7 +231,7 @@ void textedit_init( char* filename, char* password ) {
 			#ifdef ED_VERBOSE
 			ed_fatal_error( __FILE__, __LINE__ );
 			#else
-			printf( "E1" );
+			ed_fatal_error( "E1" );
 			#endif
 		}
 		break;
@@ -274,6 +274,7 @@ void textedit_status_print( char *msg ) {
 	// Display message
 	memset( textedit_status, LIBSCREEN_SPACE, LIBSCREEN_NB_COLS );
 	snprintf( textedit_status, LIBSCREEN_NB_COLS, "%s", msg );
+	textedit_status[strlen(msg)] = LIBSCREEN_SPACE;
 	libscreen_copyline_inv( TEXTEDIT_STATUSSCR_BASE, (uint8_t*)textedit_status );
 }
 
@@ -283,6 +284,7 @@ void textedit_status_popup( char *msg ) {
 	// Display message
 	memset( textedit_status, LIBSCREEN_SPACE, LIBSCREEN_NB_COLS );
 	snprintf( textedit_status, LIBSCREEN_NB_COLS, "%s", msg );
+	textedit_status[strlen(msg)] = LIBSCREEN_SPACE;
 	libscreen_copyline_inv( TEXTEDIT_STATUSSCR_BASE, (uint8_t*)textedit_status );
 
 	// Wait some time
@@ -342,7 +344,7 @@ void textedit_event( uint8_t c ) {
 		// Insert soft TAB
 		case TEXTEDIT_CTRL_Z:
 			for ( i = TEXTEDIT_TABSZ - ( textedit_cur_x % TEXTEDIT_TABSZ ); i > 0; i-- ) {
-				if ( textedit_insert( textedit_lpntr, textedit_cur_x, c ) == false ) {
+				if ( textedit_insert( textedit_lpntr, textedit_cur_x, TEXTSTORE_CHAR_SPACE ) == false ) {
 					atmos_ping( );
 					break;
 				}
@@ -392,8 +394,7 @@ void textedit_event( uint8_t c ) {
 		libscreen_copyline( 23, (uint8_t*)"[CTRL]-P: PRINT     [ESC]:    QUIT      " );
 		libscreen_copyline( 25, (uint8_t*)"[CTRL]-Z: SOFT TAB  [CTRL]-N: SVR ON/OFF" );
 
-		libscreen_copyline_inv( 
-							27, (uint8_t*)"                                        " );
+		libscreen_clearline( 27, LIBSCREEN_SPACE ^ LIBSCREEN_INVERT_BIT );
 		
 		// Active wait and launch of a screensaver after a while
 		if ( textedit_sc_enable ) {
@@ -439,7 +440,7 @@ void textedit_event( uint8_t c ) {
 					"SAVEU\"%s\",A%u,E%u", 
 					textedit_filename, 
 					(uint16_t)&textstore,
-					(uint16_t)&textstore + textstore_sizeof( ) );
+					(uint16_t)&textstore + textstore_sizeof( ) - 1 );
 		liboric_basic( liboric_cmd );
 		// Error handling
 		switch( liboric_error_nd( ) ) {
@@ -522,6 +523,9 @@ void textedit_event( uint8_t c ) {
 		textedit_lpntr = textedit_spntr + TEXTEDIT_EDITORSCR_SZ - 1;
 		// Update cursor horizontal position at the end of the line
 		textedit_cur_x = textstore.lsize[textedit_lpntr];
+		if ( textedit_cur_x == TEXTSTORE_LINE_SIZE ) {
+			textedit_cur_x--;
+		}
 		break;
 
 		case TEXTEDIT_KEY_ESC:
@@ -552,6 +556,9 @@ void textedit_event( uint8_t c ) {
 		break;
 
 		case TEXTEDIT_CTRL_X:
+		if ( !textstore.nblines ) {
+			break;
+		}
 		// Cut current line to copy buffer
 		memcpy( textedit_copy_buf, textstore.tlpt[textedit_lpntr], TEXTSTORE_LINE_SIZE );
 		textedit_copy_buf_sz = textstore.lsize[textedit_lpntr];
@@ -667,12 +674,18 @@ void textedit_event( uint8_t c ) {
 		// If needed, update cursor horizontal position
 		if ( textedit_cur_x > textstore.lsize[textedit_lpntr] ) {
 			textedit_cur_x = textstore.lsize[textedit_lpntr];
+			if ( textedit_cur_x == TEXTSTORE_LINE_SIZE ) {
+				textedit_cur_x--;
+			}
 		}
 		// Adjust cursor position in case its at the right of a CRLF
 		textedit_adjust_cursor( );
 		break;
 
 		case TEXTEDIT_ARROW_DOWN:
+		if ( !textstore.nblines ) {
+			break;
+		}
 		// Last line ?
 		if ( textedit_lpntr >= textstore.nblines - 1 ) {
 			break;
@@ -689,6 +702,9 @@ void textedit_event( uint8_t c ) {
 		// If needed, update cursor horizontal position
 		if ( textedit_cur_x > textstore.lsize[textedit_lpntr] ) {
 			textedit_cur_x = textstore.lsize[textedit_lpntr];
+			if ( textedit_cur_x == TEXTSTORE_LINE_SIZE ) {
+				textedit_cur_x--;
+			}
 		}
 		// Adjust cursor position in case its at the right of a CRLF
 		textedit_adjust_cursor( );
@@ -840,7 +856,7 @@ void textedit_status_refresh( void ) {
 		#ifdef ED_VERBOSE
 		ed_fatal_error( __FILE__, __LINE__ );
 		#else
-		printf( "E2" );
+		ed_fatal_error( "E2" );
 		#endif
 	}
 
@@ -873,6 +889,13 @@ void textedit_status_refresh( void ) {
 
 // Refresh cursor
 void textedit_cursor_refresh( void ) {
+
+	// If the cursor is out of the screen, place it at the last column of the screen
+	if ( textedit_cur_x >= LIBSCREEN_NB_COLS ) {
+		textedit_cur_x = LIBSCREEN_NB_COLS - 1;
+	}
+
+	// Invert the character at the cursor position
 	libscreen_textbuf[textedit_cur_y*LIBSCREEN_NB_COLS+textedit_cur_x] ^= LIBSCREEN_INVERT_BIT;
 }
 
@@ -905,6 +928,9 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 	uint8_t			wbufsz = 0;								// Word buffer size
 	uint8_t			wbufc = 0;								// Cursor position in word buffer
 	bool			wbufcflag = false;						// Flag indicating cursor position has been set
+	uint8_t			nlines;									// Lines needed by the reformatting
+	uint8_t			fill;									// Simulated filling of the current line
+	uint8_t			wsz;									// Simulated word buffer size
 
 	// If there is no more line left and the char is not DEL, refuse insertion
 	if ( 	( textstore.nblines == TEXTSTORE_LINES_MAX ) && 
@@ -914,22 +940,28 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 	}
 
 	if ( 	
-			( // Not at the begining or at the end of the current line
-				( cpos > 0 ) && 
-				( cpos < textstore.lsize[lpos] - 1 )
+			( // Typed char does not trigger any reflow
+				( c != TEXTEDIT_KEY_DEL ) && 
+				( c != TEXTSTORE_CHAR_RET ) &&
+				( c != TEXTSTORE_CHAR_SPACE ) 
+			)
+			&&
+			( // At least one character left in the line
+				textstore.lsize[lpos] < TEXTSTORE_LINE_SIZE - 1
 			)
 			&&
 			(
-				( // At the end of the text
+				( // At the end of the text, on a line not closed by a CRLF
 					( lpos == textstore.nblines - 1 ) &&
-					( cpos == textstore.lsize[lpos] ) 
+					( cpos == textstore.lsize[lpos] ) &&
+					(	( textstore.lsize[lpos] == 0 ) ||
+						( textstore.tlpt[lpos][cpos-1] != TEXTSTORE_CHAR_RET )
+					)
 				) 
 				||
-				( // At least one character left in the line
-					( textstore.lsize[lpos] < TEXTSTORE_LINE_SIZE - 1 ) &&
-					( c != TEXTEDIT_KEY_DEL ) &&
-					( c != TEXTSTORE_CHAR_RET ) &&
-					( c != TEXTSTORE_CHAR_SPACE ) 
+				( // Not at the begining nor at the end of the current line
+					( cpos > 0 ) && 
+					( cpos < textstore.lsize[lpos] - 1 )
 				)
 			)
 		) {
@@ -964,7 +996,7 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 			#ifdef ED_VERBOSE
 			ed_fatal_error( __FILE__, __LINE__ );
 			#else
-			printf( "E3" );
+			ed_fatal_error( "E3" );
 			#endif
 		}
 		#endif
@@ -1022,6 +1054,55 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 
 		// Increment position of the cursor
 		lbufc++;
+	}
+
+	// Count the lines the reformatting below will need. Nothing may be
+	// erased before we know the text can be entirely rebuilt.
+	// Do this only if the text is nearing its maximum length.
+	if ( textstore.nblines >= TEXTSTORE_LINES_MAX - TEXTEDIT_INSBUFSCAN ) {
+		nlines = 1;
+		fill = 0;
+		wsz = 0;
+		for ( cidx = 0; cidx < lbufsz; cidx++ ) {
+
+			// Accumulate the current word
+			if ( wsz < TEXTSTORE_LINE_SIZE ) {
+				wsz++;
+			}
+
+			// End of a word: place it exactly as the loop below would
+			if (	( linebuf[cidx] == TEXTSTORE_CHAR_SPACE ) ||
+					( linebuf[cidx] == TEXTSTORE_CHAR_RET ) ||
+					( wsz == TEXTSTORE_LINE_SIZE ) ||
+					( cidx == lbufsz - 1 ) ) {
+
+				// Word does not fit in the current line: open a new one
+				if ( wsz + fill > TEXTSTORE_LINE_SIZE ) {
+					nlines++;
+					fill = 0;
+				}
+				fill += wsz;
+
+				// A CRLF closes the current line
+				if ( linebuf[cidx] == TEXTSTORE_CHAR_RET ) {
+					nlines++;
+					fill = 0;
+				}
+
+				// Reset current word size
+				wsz = 0;
+			}
+		}
+
+		// Refuse the insertion if the lines to be created are not available.
+		// Lines lidxstart..lidxstop-1 are reused, the others must be inserted.
+		if ( nlines > lidxstop - lidxstart ) {
+			if ( 	nlines - ( lidxstop - lidxstart ) > 
+					TEXTSTORE_LINES_MAX - textstore.nblines ) {
+				textedit_mem_full( );
+				return false;
+			}
+		}
 	}
 
 	// Scan the lines from the start
@@ -1114,9 +1195,11 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 		}
 	}
 
-	// Check if a line should be removed
-	if ( lidx < lidxstop - 1 ) {
+	// Remove every scanned line that has not been rewritten. Their content
+	// has already been re-emitted above, keeping them would duplicate it.
+	while ( lidx < lidxstop - 1 ) {
 		textstore_del_line( lidx + 1 );
+		lidxstop--;
 	}
 
 	// Check if cursor should be appened after the text
@@ -1168,7 +1251,9 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 
 	// If last line is full, insert new line to make room for cursor
 	if ( textstore.lsize[textstore.nblines-1] == TEXTSTORE_LINE_SIZE ) {
-		textstore_insert_line( textstore.nblines );
+		if ( textstore_insert_line( textstore.nblines ) ) {
+			textedit_mem_full( );
+		}
 	}
 
 	// Refresh whole screen

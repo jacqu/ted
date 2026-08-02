@@ -45,7 +45,7 @@ void libscreen_clear( uint8_t );
 void libscreen_copy( uint8_t* );
 void libscreen_clearline( uint8_t, uint8_t );
 void libscreen_copyline( uint8_t, uint8_t* );
-void libscreen_copyline_inv( uint8_t, uint8_t* );
+void libscreen_copyline_inv( uint8_t, const uint8_t* );
 void libscreen_display( uint16_t, uint8_t** );
 void libscreen_scroll_down( void );
 

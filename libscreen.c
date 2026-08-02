@@ -63,17 +63,30 @@ void libscreen_copyline( uint8_t line, uint8_t *b ) {
 	memcpy( (uint8_t*)(LIBSCREEN_BASE_ADDRESS+line*LIBSCREEN_NB_COLS), b, LIBSCREEN_NB_COLS );
 }
 
-// Copy line to screen with flipped charcaters codes inverted bit
+// Copy line to screen with flipped characters codes inverted bit
+// The source buffer is left unchanged
 // Lines are numbered from 0 to 27
-void libscreen_copyline_inv( uint8_t line, uint8_t *b ) {
-	uint8_t i;
+void libscreen_copyline_inv( uint8_t line, const uint8_t *b ) {
+	uint8_t		i;
+	uint8_t		*s;
 
-	// Flip inverted bit
-	for ( i = 0; i < LIBSCREEN_NB_COLS; i++ ) {
-		b[i] ^= LIBSCREEN_INVERT_BIT;
+	// Check if line is valid
+	#ifdef ED_DEBUG
+	if ( line >= LIBSCREEN_NB_LINES ) {
+		#ifdef ED_VERBOSE
+		ed_fatal_error( __FILE__, __LINE__ );
+		#else
+		ed_fatal_error( "V2" );
+		#endif
 	}
-	
-	libscreen_copyline( line, b );
+	#endif
+
+	s = (uint8_t*)( LIBSCREEN_BASE_ADDRESS + line*LIBSCREEN_NB_COLS );
+
+	// Copy and flip in a single pass
+	for ( i = 0; i < LIBSCREEN_NB_COLS; i++ ) {
+		s[i] = b[i] ^ LIBSCREEN_INVERT_BIT;
+	}
 }
 
 // Display current text buffer segment

@@ -44,6 +44,11 @@ void textstore_fix_pointers( void ) {
 	int32_t		offset;
 	uint16_t	i;
 
+	// If no lines, nothing to fix
+	if ( !textstore.nblines ) {
+		return;
+	}
+
 	// Find the lower pointer in the pointer list
 	for ( i = 0; i < textstore.nblines; i++ ) {
 		if ( textstore.tlpt[i] < address ) {
@@ -52,7 +57,7 @@ void textstore_fix_pointers( void ) {
 	}
 
 	// Find the lower index in the pointer flag array
-	for ( i = 0; i < textstore.nblines; i++ ) {
+	for ( i = 0; i < TEXTSTORE_LINES_MAX; i++ ) {
 		if ( textstore.ptflag[i] == TEXTSTORE_LINEPT_USED ) {
 			break;
 		}
@@ -301,7 +306,7 @@ void textstore_del_chars( uint16_t line_nb, uint8_t char_nb, uint8_t chars_nb ) 
 
 	// Left-shift char buffer if required
 	if ( char_nb < textstore.lsize[line_nb] - 1 ) {
-		memmove( &textstore.tlpt[line_nb][char_nb], &textstore.tlpt[line_nb][char_nb+chars_nb], sizeof(uint8_t) * ( textstore.lsize[line_nb] - char_nb - 1 ) );
+		memmove( &textstore.tlpt[line_nb][char_nb], &textstore.tlpt[line_nb][char_nb+chars_nb], sizeof(uint8_t) * ( textstore.lsize[line_nb] - char_nb - chars_nb ) );
 	}
 
 	// Decrement char counter
@@ -399,6 +404,11 @@ void textstore_clear_line( uint16_t line_nb ) {
 // Compute actual size of the structure
 uint16_t textstore_sizeof( void ) {
 	uint16_t i, j = 0;
+
+	// If no lines, return 0
+	if ( !textstore.nblines ) {
+		return 0;
+	}
 
 	// Scan all line pointers and keep the max
 	for ( i = 0; i < textstore.nblines; i++ ) {
@@ -536,8 +546,10 @@ void textstore_print ( uint8_t type ) {
 // Iterates until CRLF character or blank line or EOF is encountered
 // Returns the number of characters moved in the current line
 int8_t textstore_reformat( uint16_t line_nb ) {
-	int8_t ret, i = 0;
-	uint16_t j = line_nb;
+	int8_t		ret, i = 0;
+	uint16_t	j = line_nb;
+	uint16_t	nblines_bak;
+	bool		first = true;
 
 	// Nothing to move upwards
 	if ( 	( j == 0 ) || 
@@ -547,11 +559,15 @@ int8_t textstore_reformat( uint16_t line_nb ) {
 
 	// Iterate
 	do {
+		// Save the line count to detect a deletion made by the call below
+		nblines_bak = textstore.nblines;
+
 		ret = textstore_move_first_words_up( j );
 
-		// If on the current line, store the nb of chars that have been moved
-		if ( j == line_nb ) {
+		// On the first pass only, store the nb of chars that have been moved
+		if ( first ) {
 			i = ret;
+			first = false;
 		}
 
 		// If no characters moved, stop
@@ -559,12 +575,22 @@ int8_t textstore_reformat( uint16_t line_nb ) {
 			break;
 		}
 
+		// If the current line has been deleted, the following line has taken
+		// index j: process it on the next pass without stepping forward
+		if ( textstore.nblines < nblines_bak ) {
+			continue;
+		}
+
 		// If CRLF at the end of the current line, end
-		if ( textstore.tlpt[j][textstore.lsize[j]-1] == TEXTSTORE_CHAR_RET )	{
+		if ( 	( textstore.lsize[j] ) &&
+				( textstore.tlpt[j][textstore.lsize[j]-1] == TEXTSTORE_CHAR_RET ) )	{
 			break;
 		}
 
-	} while ( 	( ++j < textstore.nblines ) );
+		// Step to the next line
+		j++;
+
+	} while ( j < textstore.nblines );
 
 	return i;
 }
@@ -586,14 +612,14 @@ int8_t textstore_move_first_words_up( uint16_t line_nb ) {
 	}
 	#endif
 
-	// If last character of the previous line is a CRLF, do nothing
-	if ( textstore.tlpt[line_nb-1][textstore.lsize[line_nb-1]-1] == TEXTSTORE_CHAR_RET ) {
-		return 0;
-	}
-
 	// If previous line is empty, delete line
 	if ( textstore.lsize[line_nb-1] == 0 ) {
 		textstore_del_line( line_nb - 1 );
+		return 0;
+	}
+
+	// If last character of the previous line is a CRLF, do nothing
+	if ( textstore.tlpt[line_nb-1][textstore.lsize[line_nb-1]-1] == TEXTSTORE_CHAR_RET ) {
 		return 0;
 	}
 

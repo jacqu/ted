@@ -74,6 +74,10 @@
 #define TEXTEDIT_TABSZ				4				// Tab size
 #define TEXTEDIT_INSBUFSCAN			3				// Number of lines to be scanned for one insertion
 
+// Screen saver defines
+#define TEXTEDIT_SC_LEADER_BIT		0x80			// Head pixel of a stripe
+#define TEXTEDIT_SC_COUNT_MASK		0x7F			// Bits holding the counter
+
 // Globals
 extern uint8_t 						textedit_cur_y;	// Vertical cursor position on the screen. First line is 0.
 extern uint16_t						textedit_lpntr;	// Current line position in the scrolled text

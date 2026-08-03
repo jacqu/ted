@@ -7,7 +7,7 @@
 
 // Master debug switch: toggle on to activate sanity checks
 #define ED_DEBUG
-#define ED_VERBOSE							// Toggle verbose outputs
+//#define ED_VERBOSE							// Toggle verbose outputs
 
 // Usefull macros
 #define MIN(a,b) (((a)<(b))?(a):(b))

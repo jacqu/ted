@@ -99,7 +99,6 @@ void textedit_exit( void ) {
 // Screen saver
 void textedit_screensaver( void ) {
 	static bool 	init_flag = false;
-	static bool		leader_flag[LIBSCREEN_NB_COLS];
 	static uint8_t	col_on[LIBSCREEN_NB_COLS];
 	static uint8_t	col_off[LIBSCREEN_NB_COLS];
 	uint16_t		i;
@@ -116,7 +115,6 @@ void textedit_screensaver( void ) {
 			for ( i = 1; i < LIBSCREEN_NB_COLS; i++ ) {
 				col_on[i] = (uint8_t)( rand( ) % LIBSCREEN_NB_LINES );
 				col_off[i] = (uint8_t)( rand( ) % LIBSCREEN_NB_LINES );
-				leader_flag[i] = false;
 			}
 
 			init_flag = false;
@@ -129,16 +127,16 @@ void textedit_screensaver( void ) {
 				col_on[i]--;
 				libscreen_textbuf[i] = LIBSCREEN_SPACE;
 				if ( col_on[i] == 0 ) {
-					leader_flag[i] = true;
+					col_off[i] |= TEXTEDIT_SC_LEADER_BIT;
 				}
 			}
 			else {
-				if ( col_off[i] ) {
+				if ( col_off[i] & TEXTEDIT_SC_COUNT_MASK ) {
 					col_off[i]--;
 					// The magic occurs here
 					libscreen_textbuf[i] = '!' + ( rand() % 94 );
-					if ( leader_flag[i] ) {
-						leader_flag[i] = false;
+					if ( col_off[i] & TEXTEDIT_SC_LEADER_BIT ) {
+						col_off[i] &= TEXTEDIT_SC_COUNT_MASK;
 						libscreen_textbuf[i] = LIBSCREEN_PLAIN;
 					}
 				}
@@ -942,16 +940,18 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 	}
 
 	if ( 	
-			( // Typed char does not trigger any reflow
-				( c != TEXTEDIT_KEY_DEL ) && 
-				( c != TEXTSTORE_CHAR_RET ) &&
-				( c != TEXTSTORE_CHAR_SPACE ) 
-			)
-			&&
-			( // At least one character left in the line
-				textstore.lsize[lpos] < TEXTSTORE_LINE_SIZE - 1
-			)
-			&&
+			// Typed char does not trigger any reflow
+			// At least one character left in the line
+			( c != TEXTEDIT_KEY_DEL ) && 
+			( c != TEXTSTORE_CHAR_RET ) &&
+			( c != TEXTSTORE_CHAR_SPACE ) && 
+			( textstore.lsize[lpos] < TEXTSTORE_LINE_SIZE - 1 ) &&
+			( // No word straddles the boundary with the line above
+				( lpos == TEXTEDIT_TEXT_BASE ) ||
+				( textstore.lsize[lpos-1] == 0 ) ||
+				( textstore.tlpt[lpos-1][textstore.lsize[lpos-1]-1] == TEXTSTORE_CHAR_SPACE ) ||
+				( textstore.tlpt[lpos-1][textstore.lsize[lpos-1]-1] == TEXTSTORE_CHAR_RET )
+			) &&
 			(
 				( // At the end of the text, on a line not closed by a CRLF
 					( lpos == textstore.nblines - 1 ) &&
@@ -975,7 +975,7 @@ bool textedit_insert( uint16_t lpos, uint8_t cpos, uint8_t c ) {
 		libscreen_copyline( textedit_cur_y, textstore.tlpt[lpos] );
 		return true;
 	}
-	
+
 	// Define scanning range
 	if ( lpos == 0 ) {
 		lidxstart = 0;

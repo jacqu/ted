@@ -552,15 +552,28 @@ void textedit_event( uint8_t c ) {
 		// Copy current line to copy buffer
 		memcpy( textedit_copy_buf, textstore.tlpt[textedit_lpntr], TEXTSTORE_LINE_SIZE );
 		textedit_copy_buf_sz = textstore.lsize[textedit_lpntr];
+		// If the line is not full, add a CR at the end of the copy buffer
+		if ( textstore.lsize[textedit_lpntr] < TEXTSTORE_LINE_SIZE ) {
+			if
+			( 
+				( textedit_copy_buf[textstore.lsize[textedit_lpntr]-1] != TEXTSTORE_CHAR_RET ) ||
+				( textedit_copy_buf[textstore.lsize[textedit_lpntr]-1] != TEXTSTORE_CHAR_SPACE )
+			)
+			{
+				textedit_copy_buf[textstore.lsize[textedit_lpntr]] = TEXTSTORE_CHAR_RET;
+				textedit_copy_buf_sz++;
+			}
+		}
+		
 		break;
 
 		case TEXTEDIT_CTRL_X:
 		if ( !textstore.nblines ) {
 			break;
 		}
-		// Cut current line to copy buffer
-		memcpy( textedit_copy_buf, textstore.tlpt[textedit_lpntr], TEXTSTORE_LINE_SIZE );
-		textedit_copy_buf_sz = textstore.lsize[textedit_lpntr];
+		// Copy current line to copy buffer
+		textedit_event( TEXTEDIT_CTRL_C );
+		// Cut current line
 		// If not on the last line, make the cut
 		if ( textedit_lpntr < textstore.nblines - 1 ) {
 			// Delete current line

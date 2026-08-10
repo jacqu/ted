@@ -556,7 +556,7 @@ void textedit_event( uint8_t c ) {
 		if ( textstore.lsize[textedit_lpntr] < TEXTSTORE_LINE_SIZE ) {
 			if
 			( 
-				( textedit_copy_buf[textstore.lsize[textedit_lpntr]-1] != TEXTSTORE_CHAR_RET ) ||
+				( textedit_copy_buf[textstore.lsize[textedit_lpntr]-1] != TEXTSTORE_CHAR_RET ) &&
 				( textedit_copy_buf[textstore.lsize[textedit_lpntr]-1] != TEXTSTORE_CHAR_SPACE )
 			)
 			{

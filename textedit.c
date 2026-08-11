@@ -599,6 +599,8 @@ void textedit_event( uint8_t c ) {
 				textedit_saved_flag = false;
 			}
 		}
+		// Adjust cursor position in case its at the right of a CRLF
+		textedit_adjust_cursor( );
 		break;
 
 		case TEXTEDIT_CTRL_V:
@@ -627,6 +629,8 @@ void textedit_event( uint8_t c ) {
 		}
 		// Update x cursor
 		textedit_cur_x = textstore.lsize[textedit_lpntr];
+		// Adjust cursor position in case its at the right of a CRLF
+		textedit_adjust_cursor( );
 		break;
 
 		case TEXTEDIT_ARROW_RIGHT:

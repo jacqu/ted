@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <conio.h>
 #include <unistd.h>
@@ -10,6 +9,7 @@
 #include "libscreen.h"
 #include "textstore.h"
 #include "textedit.h"
+#include "strfmt.h"
 #include "ed.h"
 
 #define ED_ORIC_GRAB_TEST_ADD	0xA3		// 	Address where to test if GRAB is active 
@@ -32,12 +32,24 @@ uint16_t 	ed_timer = 0;
 // Fatal error exit
 #ifdef ED_VERBOSE
 void ed_fatal_error( char* msg, uint32_t line ) {
-	fprintf( stderr, "PANIC: %s:%lu\n", msg, (unsigned long)line );
+	char	buffer[ED_PANIC_NUMBER_WIDTH+1];
+
+	libscreen_console_puts( ED_PANIC_PREFIX );
+	libscreen_console_puts( msg );
+	libscreen_console_puts( ED_PANIC_SEPARATOR );
+	strfmt_end( buffer,
+				strfmt_number( buffer, (uint16_t)line, ED_PANIC_NUMBER_WIDTH,
+							   sizeof( buffer ) ),
+				sizeof( buffer ) );
+	libscreen_console_puts( buffer );
+	libscreen_console_puts( "\n" );
 	exit( ED_FATAL_ERROR );
 }
 #else
 void ed_fatal_error( char* msg ) {
-	fprintf( stderr, "PANIC: %s\n", msg );
+	libscreen_console_puts( ED_PANIC_PREFIX );
+	libscreen_console_puts( msg );
+	libscreen_console_puts( "\n" );
 	exit( ED_FATAL_ERROR );
 }
 #endif
@@ -119,7 +131,7 @@ char* ed_get_password( void ) {
 	password[0] = 0;
 
 	// Display prompt
-	printf( "pwd: " );
+	libscreen_console_puts( "pwd: " );
 
 	// Get characters
 	while ( 1 ) {
@@ -129,7 +141,7 @@ char* ed_get_password( void ) {
 		// End password entry with RET
 		if ( c == TEXTEDIT_KEY_RET ) {
 			password[i] = 0;
-			printf( "\n" );
+			libscreen_console_puts( "\n" );
 			break;
 		}
 
@@ -138,7 +150,7 @@ char* ed_get_password( void ) {
 			if ( i ) {
 				i--;
 				password[i] = 0;
-				printf( "%c", c );
+				libscreen_console_putc( c );
 			}
 			else {
 				atmos_ping( );
@@ -150,7 +162,7 @@ char* ed_get_password( void ) {
 		if ( ( c >= ED_PW_ASCII_MIN ) && ( c <= ED_PW_ASCII_MAX ) ) {
 			if ( i < ED_PW_MAX_LENGTH ) {
 				password[i++] = c;
-				printf( "*" );
+				libscreen_console_puts( "*" );
 			}
 			else {
 				atmos_ping( );
@@ -179,7 +191,7 @@ int main( void ) {
 
 	// Check if HIRES memory has been grabbed
 	if ( ed_grab_test[0] == ED_ORIC_GRAB_TEST_VAL ) {
-		fprintf( stderr, "LOW MEM: TYPE 'GRAB' AT BASIC PROMPT\n");
+		libscreen_console_puts( "LOW MEM: TYPE 'GRAB' AT BASIC PROMPT\n" );
 		return true;
 	}
 
@@ -189,24 +201,26 @@ int main( void ) {
 	// If no argument, display a little help
 	
 	if ( !filename ) {
-		printf( "  /\\---/\\      -               /-\n" );
-		printf( "  | + + |     | |     ---      | |\n" );
-		printf( "   \\ ' /     (---)  / / ) )  --| |\n" );
-		printf( "(O)/   \\(O)   | |  ( --- /  / /  |\n" );
-		printf( "  (  .  )     \\ \\   \\ \\    ( (  /\n" );
-		printf( "(O)-----(O)    ---   ----   ---\\  \\\n" );
+		libscreen_console_puts( "  /\\---/\\      -               /-\n" );
+		libscreen_console_puts( "  | + + |     | |     ---      | |\n" );
+		libscreen_console_puts( "   \\ ' /     (---)  / / ) )  --| |\n" );
+		libscreen_console_puts( "(O)/   \\(O)   | |  ( --- /  / /  |\n" );
+		libscreen_console_puts( "  (  .  )     \\ \\   \\ \\    ( (  /\n" );
+		libscreen_console_puts( "(O)-----(O)    ---   ----   ---\\  \\\n" );
 		liboric_basic( ed_blue_paper );
-		printf( "\n" );
-		printf( ">                                    <" );
-		printf( ">  USAGE: ted 'file' [ret]           <" );
-		printf( ">                                    <" );
-		printf( ">   file is lowercase w/o extension  <" );
-		printf( ">   blank password -> no encryption  <" );
-		printf( ">   ted 'readme' [ret][ret]: manual  <" );
-		printf( ">                                    <" );
+		libscreen_console_puts( "\n" );
+		libscreen_console_puts( ">                                    <" );
+		libscreen_console_puts( ">  USAGE: ted 'file' [ret]           <" );
+		libscreen_console_puts( ">                                    <" );
+		libscreen_console_puts( ">   file is lowercase w/o extension  <" );
+		libscreen_console_puts( ">   blank password -> no encryption  <" );
+		libscreen_console_puts( ">   ted 'readme' [ret][ret]: manual  <" );
+		libscreen_console_puts( ">                                    <" );
 		liboric_basic( ed_blue_paper );
-		printf( "\n" );
-		printf( "Version %s\n", TED_VERSION );
+		libscreen_console_puts( "\n" );
+		libscreen_console_puts( ED_VERSION_PREFIX );
+		libscreen_console_puts( TED_VERSION );
+		libscreen_console_puts( "\n" );
 		return true;
 	}
 

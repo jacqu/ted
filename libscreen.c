@@ -3,7 +3,7 @@
  * ================================================================== */
 
 #include <stdlib.h>
-#include <stdio.h>
+#include <conio.h>
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -11,6 +11,28 @@
 #include "ed.h"
 
 uint8_t *libscreen_textbuf = (uint8_t*)LIBSCREEN_BASE_ADDRESS;
+
+/* ------------------------------------------------------------------ *
+ * Console                                                            *
+ *                                                                    *
+ * The messages printed before the editor takes the screen over go     *
+ * through here rather than through the printf family, which costs     *
+ * several kilobytes this program does not have. What printf did and   *
+ * the console of cc65 does not is turn a line feed into a carriage    *
+ * return followed by a line feed; without it every line starts where  *
+ * the one above it ended.                                            *
+ * ------------------------------------------------------------------ */
+
+// Print a string
+// One character at a time through libconsole.s, which hands each of them
+// to the print routine of the ROM exactly as the C library used to
+void libscreen_console_puts( const char *text ) {
+
+	while ( *text ) {
+		libscreen_console_putc( *text );
+		text++;
+	}
+}
 
 // Clear screen
 // Duration: 11ms

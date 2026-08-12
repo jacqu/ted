@@ -17,6 +17,13 @@
 #define ED_ORIC_VIA_TIM1		0x304		//  Timer 1 register address of VIA
 #define ED_ORIC_VIA_TIM2		0x308		// 	Timer 2 register address of VIA
 #define ED_ORIC_ULA_TIM			0x276		//	ULA system timer register
+
+/* Pieces of the messages printed on the console, now that they are put *
+ * together by hand rather than by the printf family                    */
+#define ED_PANIC_PREFIX			"PANIC: "			// Header of a fatal error message
+#define ED_PANIC_SEPARATOR		":"					// Between the file and the line number
+#define ED_PANIC_NUMBER_WIDTH	5					// Digits of a source line number
+#define ED_VERSION_PREFIX		"Version "			// Header of the version line
 #define ED_FN_PREFIX_LEN		9
 #define ED_FN_SUFFIX			".ted"
 #define ED_FN_SUFFIX_LEN		4

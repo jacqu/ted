@@ -3,8 +3,9 @@
  * ================================================================== */
 
 #include <stdlib.h>
-#include <stdio.h>
+#include <conio.h>
 #include <string.h>
+#include "libscreen.h"
 #include "liboric.h"
 
 char liboric_cmd[LIBORIC_MAX_CMD_SIZE];
@@ -35,7 +36,9 @@ char *sedoric_errors[SEDORIC_MAX_ERROR+1] = {
 
 void liboric_print_error( void ) {
 
-	fprintf( stderr, "?%s ERROR\n", sedoric_errors[liboric_error_nd()] );
+	libscreen_console_puts( LIBORIC_ERROR_PREFIX );
+	libscreen_console_puts( sedoric_errors[liboric_error_nd()] );
+	libscreen_console_puts( LIBORIC_ERROR_SUFFIX );
 }
 
 char* liboric_error_msg( void ) {
@@ -63,7 +66,7 @@ unsigned char liboric_error_nd( void ) {
 void liboric_basic( char *str ) {
 
 	if ( strlen( str ) + 1 > LIBORIC_MAX_CMD_SIZE ) {
-		fprintf( stderr, "ERROR: LIBORIC COMMAND TOO LONG\n" );
+		libscreen_console_puts( "ERROR: LIBORIC COMMAND TOO LONG\n" );
 		exit( -1 );
 	}
 

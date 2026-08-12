@@ -5,11 +5,27 @@
 #ifndef __TEXTSTORE_H__
 #define __TEXTSTORE_H__
 
+#include "blake2s.h"
+
 #define TEXTSTORE_LINES_MAX				350			// Maximum number of lines in the text
 #define TEXTSTORE_LINE_SIZE				LIBSCREEN_NB_COLS			
 													// Number of characters in a line
 #define TEXTSTORE_NONCE_SZ				CHACHA_NONCE_SZ
 													// Size of the nonce
+#define TEXTSTORE_TAG_SZ				BLAKE2S_TAG_SZ
+													// Size of the authentication tag
+
+/* Version of the on disk format. A file carries it so that a version of *
+ * TED which does not know how to read it says so instead of handing the *
+ * user a text made of noise. Version 1 is the format that had neither a *
+ * tag nor a version, and is not readable any more.                      */
+#define TEXTSTORE_VERSION				2			// Format written by this version of TED
+
+/* Everything in front of the text itself. A file shorter than that      *
+ * cannot be one, whatever its header claims.                            */
+#define TEXTSTORE_HEADER_SZ				( TEXTSTORE_TAG_SZ + TEXTSTORE_NONCE_SZ + 6 + \
+										  4 * TEXTSTORE_LINES_MAX + 4 )
+
 #define TEXTSTORE_MAGIC					0x94c910ff
 													// Magic Number
 
@@ -25,7 +41,8 @@
 #define TEXTSTORE_PRINTER_GENERIC		0			// Generic parallel printer
 #define TEXTSTORE_PRINTER_MCP40			1			// Oric 4 colors plotter
 
-#define TEXTSTORE_LPRINT				"OUT %u"
+#define TEXTSTORE_LPRINT				"OUT "
+#define TEXTSTORE_LPRINT_DIGITS			3			// Digits of a character code
 													// Printer instruction for one char
 #define TEXTSTORE_LPRINT_LFCR			"OUT 10:OUT 13"
 													// Printer LFCR
@@ -47,8 +64,16 @@
 
 #define TEXTSTORE_KBHIT_SLEEP			255			// Number of kbhit polling cycles
 
+/* The tag comes first and the rest of the header follows it, so that    *
+ * everything the tag authenticates is the one contiguous run of bytes    *
+ * that begins right after it and ends where the file ends. The size of   *
+ * the file is written in the header for the same reason: the reader has  *
+ * to know how far the tag reaches before it can check anything.          */
 struct textstore_struct {
+	uint8_t		tag[TEXTSTORE_TAG_SZ];							// Tag of everything below
 	uint8_t		nonce[TEXTSTORE_NONCE_SZ];							// Nonce
+	uint16_t	version;											// Version of the format
+	uint16_t	fsize;												// Bytes written to the file
 	uint16_t	nblines;											// Total number of lines
 	uint8_t*	tlpt[TEXTSTORE_LINES_MAX];							// Text line pointers array
 	uint8_t		ptflag[TEXTSTORE_LINES_MAX];						// Flag for the line pointers

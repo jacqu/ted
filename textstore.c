@@ -3,7 +3,6 @@
  * ================================================================== */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <conio.h>
 #include <stdbool.h>
@@ -14,6 +13,7 @@
 #include "liboric.h"
 #include "textedit.h"
 #include "textstore.h"
+#include "strfmt.h"
 #include "ed.h"
 
 // Main data structure
@@ -36,6 +36,11 @@ void textstore_init( void ) {
 
 	// Initializing nonce
 	memset( textstore.nonce, 0, TEXTSTORE_NONCE_SZ * sizeof( uint8_t ) );
+	memset( textstore.tag, 0, TEXTSTORE_TAG_SZ * sizeof( uint8_t ) );
+
+	// Initializing the header of the file format
+	textstore.version = TEXTSTORE_VERSION;
+	textstore.fsize = 0;
 }
 
 // Fix pointers in case of text files created with different versions
@@ -455,6 +460,7 @@ void textstore_color_mcp40( uint8_t type, uint8_t color ) {
 void textstore_print ( uint8_t type ) {
 	uint16_t 	i;
 	uint8_t		j, k, c;
+	uint8_t		n;								// Index inside the command being built
 
 	// Initialize color and CRLF
 	liboric_basic( TEXTSTORE_LPRINT_LFCR );
@@ -499,7 +505,10 @@ void textstore_print ( uint8_t type ) {
 					if ( 	( c >= TEXTEDIT_ASCII_MIN ) && 
 							( c <= TEXTEDIT_ASCII_MAX ) ) {
 						// Print inverted char
-						snprintf( liboric_cmd, LIBORIC_MAX_CMD_SIZE, TEXTSTORE_LPRINT, c );
+						n = strfmt_copy( liboric_cmd, TEXTSTORE_LPRINT, LIBORIC_MAX_CMD_SIZE );
+						n += strfmt_number( &liboric_cmd[n], c, TEXTSTORE_LPRINT_DIGITS,
+											LIBORIC_MAX_CMD_SIZE - n );
+						strfmt_end( liboric_cmd, n, LIBORIC_MAX_CMD_SIZE );
 						liboric_basic( liboric_cmd );
 						// Reverse one step to print it again on the same spot
 						liboric_basic( TEXTSTORE_LPRINT_BS );
@@ -514,7 +523,10 @@ void textstore_print ( uint8_t type ) {
 			}
 			if ( 	( c >= TEXTEDIT_ASCII_MIN ) && 
 					( c <= TEXTEDIT_ASCII_MAX ) ) {
-				snprintf( liboric_cmd, LIBORIC_MAX_CMD_SIZE, TEXTSTORE_LPRINT, c );
+				n = strfmt_copy( liboric_cmd, TEXTSTORE_LPRINT, LIBORIC_MAX_CMD_SIZE );
+				n += strfmt_number( &liboric_cmd[n], c, TEXTSTORE_LPRINT_DIGITS,
+									LIBORIC_MAX_CMD_SIZE - n );
+				strfmt_end( liboric_cmd, n, LIBORIC_MAX_CMD_SIZE );
 				liboric_basic( liboric_cmd );
 			}
 			// Check for user abort

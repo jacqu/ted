@@ -3,7 +3,6 @@
  * ================================================================== */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <atmos.h>
 #include <unistd.h>
@@ -13,11 +12,30 @@
 #include "libscreen.h"
 #include "liboric.h"
 #include "chacha20.h"
+#include "blake2s.h"
 #include "textstore.h"
 #include "textedit.h"
+#include "strfmt.h"
 #include "ed.h"
 
 #define 		TEXTEDIT_UNUSED(x) (void)(x)
+
+/* ------------------------------------------------------------------ *
+ * Cryptographic state of the session                                 *
+ * ------------------------------------------------------------------ */
+static uint8_t	textedit_pool[TEXTEDIT_POOL_SZ];		// Entropy gathered while typing
+static uint8_t	textedit_pool_index = 0;				// Where the next sample lands
+static uint8_t	textedit_cipher_key[TEXTEDIT_KEY_SZ];	// Key the text is encrypted with
+static uint8_t	textedit_tag_key[TEXTEDIT_KEY_SZ];		// Key the tag is computed with
+static uint8_t	textedit_nonce_key[TEXTEDIT_KEY_SZ];	// Key the nonce is drawn with
+static bool		textedit_unverified = false;			// Set when a file failed its tag
+
+/* These serve the loading of a file, which happens before they are   *
+ * defined further down                                               */
+static void		textedit_pool_add	( const uint8_t*, uint8_t );
+static bool		textedit_tag_equal	( const uint8_t*, const uint8_t* );
+static void		textedit_load_abort	( const char* );
+static bool		textedit_console_YN	( const char* );
 
 uint8_t			*textedit_retc_a = (uint8_t*)TEXTEDIT_RET_CHAR_ADDRESS;
 uint8_t			textedit_retc_i[TEXTEDIT_ORIC_CHARS_HEIGHT];
@@ -175,6 +193,8 @@ bool textedit_equal( uint8_t *first_block, uint8_t *second_block, uint8_t block_
 }
 
 void textedit_init( char* filename, char* password ) {
+	uint8_t		textedit_tag[TEXTSTORE_TAG_SZ];		// Tag recomputed over what arrived
+	uint8_t		i;									// Index inside the command being built
 
 	// Sanity check
 	#ifdef ED_DEBUG
@@ -189,15 +209,69 @@ void textedit_init( char* filename, char* password ) {
 	textedit_filename = filename;
 	textedit_password = password;
 
+	// Gather a first sample, so that the pool is never looked at empty
+
+	textedit_entropy_stir( );
+
+
+	// Give each use of the password its own key before anything is read
+
+	textedit_keys_derive( );
+
+
 	// Initialize text and line APIs
+
 	textstore_init( );
 
 	// Load file
-	snprintf( liboric_cmd, LIBORIC_MAX_CMD_SIZE, "LOAD\"%s\",A%u,N", textedit_filename, (uint16_t)&textstore );
+	i = strfmt_copy( liboric_cmd, TEXTEDIT_LOAD_COMMAND, LIBORIC_MAX_CMD_SIZE );
+	i += strfmt_copy( &liboric_cmd[i], textedit_filename, LIBORIC_MAX_CMD_SIZE - i );
+	i += strfmt_copy( &liboric_cmd[i], TEXTEDIT_LOAD_ADDRESS, LIBORIC_MAX_CMD_SIZE - i );
+	i += strfmt_number( &liboric_cmd[i], (uint16_t)&textstore, TEXTEDIT_ADDRESS_DIGITS,
+						LIBORIC_MAX_CMD_SIZE - i );
+	i += strfmt_copy( &liboric_cmd[i], TEXTEDIT_LOAD_SUFFIX, LIBORIC_MAX_CMD_SIZE - i );
+	strfmt_end( liboric_cmd, i, LIBORIC_MAX_CMD_SIZE );
 	liboric_basic( liboric_cmd );
 	switch( liboric_error_nd( ) ) {
 		case SEDORIC_NO_ERROR:
-		printf( "FILE LOADED SUCCESSFULLY\n" );
+		libscreen_console_puts( "FILE LOADED SUCCESSFULLY\n" );
+
+		// Refuse a file this version does not know how to read, rather
+		// than hand the user a text made of noise
+		if ( textstore.version != TEXTSTORE_VERSION ) {
+			textedit_load_abort( "UNKNOWN FILE FORMAT\n" );
+		}
+
+		// The tag is about to be checked over the number of bytes the
+		// header claims, so that number has to name bytes that exist.
+		// Sedoric does not say how many it read, so a file that was cut
+		// short is caught by its tag rather than by its length
+		if ( ( textstore.fsize <= TEXTSTORE_HEADER_SZ ) ||
+			 ( textstore.fsize > sizeof( textstore ) ) ) {
+			textedit_load_abort( "DAMAGED FILE\n" );
+		}
+
+		// The tag is checked before anything is decrypted. A wrong
+		// password then costs nothing, and the text is still there to be
+		// opened with another one instead of having been turned into
+		// noise in place
+		libscreen_console_puts( "CHECKING..." );
+		blake2s_mac( textedit_tag_key,
+					 textstore.nonce,
+					 textstore.fsize - TEXTSTORE_TAG_SZ,
+					 textedit_tag,
+					 TEXTSTORE_TAG_SZ );
+
+		if ( !textedit_tag_equal( textedit_tag, textstore.tag ) ) {
+			libscreen_console_puts( "\nWRONG PASSWORD OR DAMAGED FILE\n" );
+			if ( !textedit_console_YN( "OPEN IT ANYWAY (Y/N)? " ) ) {
+				textedit_load_abort( "\n" );
+			}
+			// The text is opened on the user's word, and nothing that
+			// comes out of it is to be trusted from here on
+			textedit_unverified = true;
+		}
+
 		sleep( TEXTEDIT_UI_WAIT_TIME );
 
 		// Fix pointers in case of incompatible file versions
@@ -205,23 +279,29 @@ void textedit_init( char* filename, char* password ) {
 
 		// Decrypting
 		if ( textedit_password ) {
-			printf( "DECRYPTING..." );
+			libscreen_console_puts( "DECRYPTING..." );
 			chacha_process( (uint8_t*)&textstore.magic, 
-							textstore_sizeof( ) - ( (uint16_t)&textstore.magic - (uint16_t)&textstore),
-							(uint8_t*)textedit_password, 
+							textstore.fsize - ( (uint16_t)&textstore.magic - (uint16_t)&textstore),
+							textedit_cipher_key, 
 							textstore.nonce, 
 							0 );
 		}
 
 		// Check file validity
+		// A file whose tag matched cannot get here, so a magic number
+		// that does not fit means the user asked for a file to be opened
+		// against the advice given, and is simply told again
 		if ( textstore.magic != TEXTSTORE_MAGIC ) {
-			fprintf( stderr, "BAD MAGIC NUMBER\n" );
-			exit( ED_FATAL_ERROR );
+			if ( !textedit_unverified ) {
+				textedit_load_abort( "BAD MAGIC NUMBER\n" );
+			}
+			libscreen_console_puts( "THE TEXT DID NOT COME OUT RIGHT\n" );
+			sleep( TEXTEDIT_UI_WAIT_TIME );
 		}
 		break;
 		
 		case SEDORIC_FILE_NOT_FOUND_ERROR:
-		printf( "NEW FILE CREATED\n" );
+		libscreen_console_puts( "NEW FILE CREATED\n" );
 		sleep( TEXTEDIT_UI_WAIT_TIME );
 
 		// Allocate first line of text
@@ -235,7 +315,7 @@ void textedit_init( char* filename, char* password ) {
 		break;
 
 		default:
-		fprintf( stderr, "SEDORIC ERROR\n" );
+		libscreen_console_puts( "SEDORIC ERROR\n" );
 		exit( ED_FATAL_ERROR );
 	}
 
@@ -271,8 +351,7 @@ void textedit_status_print( char *msg ) {
 
 	// Display message
 	memset( textedit_status, LIBSCREEN_SPACE, LIBSCREEN_NB_COLS );
-	snprintf( textedit_status, LIBSCREEN_NB_COLS, "%s", msg );
-	textedit_status[strlen(textedit_status)] = LIBSCREEN_SPACE;
+	strfmt_copy( textedit_status, msg, LIBSCREEN_NB_COLS );
 	libscreen_copyline_inv( TEXTEDIT_STATUSSCR_BASE, (uint8_t*)textedit_status );
 }
 
@@ -281,8 +360,7 @@ void textedit_status_popup( char *msg ) {
 
 	// Display message
 	memset( textedit_status, LIBSCREEN_SPACE, LIBSCREEN_NB_COLS );
-	snprintf( textedit_status, LIBSCREEN_NB_COLS, "%s", msg );
-	textedit_status[strlen(textedit_status)] = LIBSCREEN_SPACE;
+	strfmt_copy( textedit_status, msg, LIBSCREEN_NB_COLS );
 	libscreen_copyline_inv( TEXTEDIT_STATUSSCR_BASE, (uint8_t*)textedit_status );
 
 	// Wait some time
@@ -291,11 +369,18 @@ void textedit_status_popup( char *msg ) {
 
 // Ask a question on the status line
 uint8_t	textedit_status_YN( char *msg ) {
+	uint8_t	i;										// Column the next field starts at
 
 	// Print question
 	memset( textedit_status, LIBSCREEN_SPACE, LIBSCREEN_NB_COLS );
-	snprintf( textedit_status, LIBSCREEN_NB_COLS, "%s (%c/%c/%c)", msg, TEXTEDIT_UI_YES_ANSWER, TEXTEDIT_UI_NO_ANSWER, TEXTEDIT_UI_CA_ANSWER );
-	textedit_status[strlen(textedit_status)] = LIBSCREEN_SPACE;
+	i = strfmt_copy( textedit_status, msg, LIBSCREEN_NB_COLS );
+	i += strfmt_copy( &textedit_status[i], TEXTEDIT_UI_ANSWER_PREFIX, LIBSCREEN_NB_COLS - i );
+	i += strfmt_char( &textedit_status[i], TEXTEDIT_UI_YES_ANSWER, LIBSCREEN_NB_COLS - i );
+	i += strfmt_char( &textedit_status[i], TEXTEDIT_UI_ANSWER_SEPARATOR, LIBSCREEN_NB_COLS - i );
+	i += strfmt_char( &textedit_status[i], TEXTEDIT_UI_NO_ANSWER, LIBSCREEN_NB_COLS - i );
+	i += strfmt_char( &textedit_status[i], TEXTEDIT_UI_ANSWER_SEPARATOR, LIBSCREEN_NB_COLS - i );
+	i += strfmt_char( &textedit_status[i], TEXTEDIT_UI_CA_ANSWER, LIBSCREEN_NB_COLS - i );
+	strfmt_copy( &textedit_status[i], TEXTEDIT_UI_ANSWER_SUFFIX, LIBSCREEN_NB_COLS - i );
 	libscreen_copyline_inv( TEXTEDIT_STATUSSCR_BASE, (uint8_t*)textedit_status );
 
 	// Scan response
@@ -322,22 +407,147 @@ void textedit_mem_full( void ) {
 	textedit_status_popup( "MEMORY FULL!" );
 }
 
-void textedit_update_nonce( void ) {
-	uint8_t *via1 = (uint8_t*)ED_ORIC_VIA_TIM1;
-	uint8_t *via2 = (uint8_t*)ED_ORIC_VIA_TIM2;
-	uint8_t *tim = (uint8_t*)ED_ORIC_ULA_TIM;
+// Leave the editor before it has started, saying why
+static void textedit_load_abort( const char *message ) {
 
-	textstore.nonce[0] = via1[0];
-	textstore.nonce[1] = via1[1];
-	textstore.nonce[2] = via2[0];
-	textstore.nonce[3] = via2[1];
-	textstore.nonce[4] = tim[0];
-	textstore.nonce[5] = tim[1];
+	libscreen_console_puts( message );
+	sleep( TEXTEDIT_UI_WAIT_TIME );
+	exit( ED_FATAL_ERROR );
+}
+
+// Ask a question on the console, before the status line exists
+static bool textedit_console_YN( const char *question ) {
+	uint8_t	c;
+
+	libscreen_console_puts( question );
+
+	for ( ;; ) {
+		c = cgetc( );
+		if ( c == TEXTEDIT_UI_YES_ANSWER ) {
+			libscreen_console_puts( "\n" );
+			return true;
+		}
+		if ( ( c == TEXTEDIT_UI_NO_ANSWER ) || ( c == TEXTEDIT_KEY_ESC ) ) {
+			libscreen_console_puts( "\n" );
+			return false;
+		}
+	}
+}
+
+// Read the free running counters of the machine
+// The two timers of the VIA and the one of the ULA are the only things
+// on an Atmos that are not the same from one run to the next
+static void textedit_entropy( uint8_t *sample ) {
+	uint8_t	*via1 = (uint8_t*)ED_ORIC_VIA_TIM1;
+	uint8_t	*via2 = (uint8_t*)ED_ORIC_VIA_TIM2;
+	uint8_t	*tim = (uint8_t*)ED_ORIC_ULA_TIM;
+
+	sample[0] = via1[0];
+	sample[1] = via1[1];
+	sample[2] = via2[0];
+	sample[3] = via2[1];
+	sample[4] = tim[0];
+	sample[5] = tim[1];
+}
+
+// Pile bytes into the entropy pool
+// Nothing is mixed here on purpose: the pool is a heap of samples, and
+// the mixing is the business of the hash that later draws a nonce out of
+// it. Piling is an exclusive or, so a sample can only ever add to what
+// is already there and never cancel it
+static void textedit_pool_add( const uint8_t *data, uint8_t size ) {
+	uint8_t	i;
+
+	for ( i = 0; i < size; i++ ) {
+		textedit_pool[textedit_pool_index] ^= data[i];
+		textedit_pool_index = ( textedit_pool_index + 1 ) & TEXTEDIT_POOL_MASK;
+	}
+}
+
+// Take one sample of the counters
+// Called on every keystroke, so that what ends up in the pool is not the
+// value of a counter, which is fairly predictable, but the instant the
+// user happened to press a key, which is not
+void textedit_entropy_stir( void ) {
+	uint8_t	sample[TEXTEDIT_ENTROPY_SZ];
+
+	textedit_entropy( sample );
+	textedit_pool_add( sample, TEXTEDIT_ENTROPY_SZ );
+}
+
+// Give each use of the password a key of its own
+// Handing the same password to the cipher, to the tag and to the nonce
+// would tie the three together for no reason. Each gets a key derived
+// from the password and from a label naming what it is for. A text saved
+// without a password is still given a tag, computed with a key of zeros:
+// it detects a damaged file, which is worth having, and it is not
+// authentication, since anybody can compute it
+void textedit_keys_derive( void ) {
+	uint8_t	master[TEXTEDIT_KEY_SZ];
+
+	if ( textedit_password ) {
+		memcpy( master, textedit_password, TEXTEDIT_KEY_SZ );
+	}
+	else {
+		memset( master, 0, TEXTEDIT_KEY_SZ );
+	}
+
+	blake2s_mac( master, (const uint8_t*)TEXTEDIT_CIPHER_LABEL,
+				 sizeof( TEXTEDIT_CIPHER_LABEL ) - 1,
+				 textedit_cipher_key, TEXTEDIT_KEY_SZ );
+	blake2s_mac( master, (const uint8_t*)TEXTEDIT_TAG_LABEL,
+				 sizeof( TEXTEDIT_TAG_LABEL ) - 1,
+				 textedit_tag_key, TEXTEDIT_KEY_SZ );
+	blake2s_mac( master, (const uint8_t*)TEXTEDIT_NONCE_LABEL,
+				 sizeof( TEXTEDIT_NONCE_LABEL ) - 1,
+				 textedit_nonce_key, TEXTEDIT_KEY_SZ );
+
+	memset( master, 0, TEXTEDIT_KEY_SZ );
+}
+
+// Draw a fresh nonce for the text about to be saved
+// Everything that could tell two saves apart goes in: the entropy piled
+// up while the text was being typed, one last look at the counters, the
+// length of the file and the shape of the text. A nonce which repeats
+// would be serious now that files carry a tag, and it takes all of those
+// agreeing at once for that to happen
+void textedit_update_nonce( uint16_t fsize ) {
+	uint8_t	sample[TEXTEDIT_ENTROPY_SZ];
+
+	textedit_entropy( sample );
+
+	blake2s_init( textedit_nonce_key, TEXTEDIT_KEY_SZ, TEXTSTORE_NONCE_SZ );
+	blake2s_update( textedit_pool, TEXTEDIT_POOL_SZ );
+	blake2s_update( sample, TEXTEDIT_ENTROPY_SZ );
+	blake2s_update( (const uint8_t*)&fsize, sizeof( fsize ) );
+	blake2s_update( textstore.lsize, textstore.nblines );
+	blake2s_final( textstore.nonce );
+}
+
+// Compare two tags without letting the answer show in the time taken
+// There is nobody to measure it on a file read from a disk, but a
+// comparison that stops at the first difference is a habit worth not
+// taking: every byte is looked at, and only the total is tested
+static bool textedit_tag_equal( const uint8_t *left, const uint8_t *right ) {
+	uint8_t	difference = 0;
+	uint8_t	i;
+
+	for ( i = 0; i < TEXTSTORE_TAG_SZ; i++ ) {
+		difference |= left[i] ^ right[i];
+	}
+
+	return ( difference == 0 );
 }
 
 // Event handler
 void textedit_event( uint8_t c ) {
 	register int8_t i;
+	uint16_t		textedit_fsize;					// Bytes the file is about to hold
+	uint8_t			j;								// Index inside the command being built
+
+	// Every keystroke tells the machine something it could not have
+	// guessed: the instant it arrived
+	textedit_entropy_stir( );
 
 	switch ( c ) {
 		// Insert soft TAB
@@ -375,9 +585,7 @@ void textedit_event( uint8_t c ) {
 		// Display help
 		case TEXTEDIT_CTRL_G:
 		libscreen_clear( LIBSCREEN_SPACE );
-		snprintf( 	textedit_status, 
-					LIBSCREEN_NB_COLS+1,
-					"%s", 				  "          U S E R    G U I D E          " );
+		strfmt_copy( textedit_status, TEXTEDIT_STATUS_GUIDE_TITLE, LIBSCREEN_NB_COLS );
 		libscreen_copyline_inv( 0, 	(uint8_t*)textedit_status );
 
 		libscreen_copyline( 3, 	(uint8_t*)"[CTRL]-S: SAVE      [CTRL]-C: COPY  LINE" );
@@ -410,10 +618,10 @@ void textedit_event( uint8_t c ) {
 
 		case TEXTEDIT_CTRL_S:
 		// Checking if media is readable by issueing dummy command
-		snprintf( 	liboric_cmd, 
-					LIBORIC_MAX_CMD_SIZE, 
-					"UNPROT\"%s\"", 
-					textedit_filename );
+		j = strfmt_copy( liboric_cmd, TEXTEDIT_UNPROT_COMMAND, LIBORIC_MAX_CMD_SIZE );
+		j += strfmt_copy( &liboric_cmd[j], textedit_filename, LIBORIC_MAX_CMD_SIZE - j );
+		j += strfmt_char( &liboric_cmd[j], TEXTEDIT_COMMAND_QUOTE, LIBORIC_MAX_CMD_SIZE - j );
+		strfmt_end( liboric_cmd, j, LIBORIC_MAX_CMD_SIZE );
 		liboric_basic( liboric_cmd );
 		if ( 	( liboric_error_nd( ) != SEDORIC_NO_ERROR ) &&
 				( liboric_error_nd( ) != SEDORIC_FILE_NOT_FOUND_ERROR ) ) {
@@ -421,25 +629,51 @@ void textedit_event( uint8_t c ) {
 			textedit_status_popup( "DISK ERROR!" );
 			break;
 		}
+		// Fill in the header before anything is computed over it
+		textedit_fsize = textstore_sizeof( );
+		textstore.version = TEXTSTORE_VERSION;
+		textstore.fsize = textedit_fsize;
+		textedit_update_nonce( textedit_fsize );
+
 		// Encrypting
 		if ( textedit_password ) {
 			textedit_status_print( "ENCRYPTING.." );
-			textedit_update_nonce( );
 			chacha_process( (uint8_t*)&textstore.magic, 
-							textstore_sizeof( ) - ( (uint16_t)&textstore.magic - (uint16_t)&textstore ),
-							(uint8_t*)textedit_password, 
+							textedit_fsize - ( (uint16_t)&textstore.magic - (uint16_t)&textstore ),
+							textedit_cipher_key, 
 							textstore.nonce, 
 							0 );
 		}
+
+		// Sealing
+		// The tag is computed over the file as it is about to be written,
+		// encrypted header and all, so that everything a reader is going
+		// to believe has been authenticated before it believes it
+		textedit_status_print( "SEALING.." );
+		blake2s_mac( textedit_tag_key,
+					 textstore.nonce,
+					 textedit_fsize - TEXTSTORE_TAG_SZ,
+					 textstore.tag,
+					 TEXTSTORE_TAG_SZ );
+
+		// The tag is the most thoroughly mixed thing the machine owns, so
+		// it goes back into the pool the next nonce will be drawn from
+		textedit_pool_add( textstore.tag, TEXTSTORE_TAG_SZ );
+
 		// Display saving message
 		textedit_status_print( "SAVING.." );
 		// Save textstore
-		snprintf( 	liboric_cmd, 
-					LIBORIC_MAX_CMD_SIZE, 
-					"SAVEU\"%s\",A%u,E%u", 
-					textedit_filename, 
-					(uint16_t)&textstore,
-					(uint16_t)&textstore + textstore_sizeof( ) - 1 );
+		j = strfmt_copy( liboric_cmd, TEXTEDIT_SAVE_COMMAND, LIBORIC_MAX_CMD_SIZE );
+		j += strfmt_copy( &liboric_cmd[j], textedit_filename, LIBORIC_MAX_CMD_SIZE - j );
+		j += strfmt_copy( &liboric_cmd[j], TEXTEDIT_LOAD_ADDRESS, LIBORIC_MAX_CMD_SIZE - j );
+		j += strfmt_number( &liboric_cmd[j], (uint16_t)&textstore, TEXTEDIT_ADDRESS_DIGITS,
+							LIBORIC_MAX_CMD_SIZE - j );
+		j += strfmt_copy( &liboric_cmd[j], TEXTEDIT_SAVE_END, LIBORIC_MAX_CMD_SIZE - j );
+		j += strfmt_number( &liboric_cmd[j],
+							(uint16_t)&textstore + textedit_fsize - 1,
+							TEXTEDIT_ADDRESS_DIGITS,
+							LIBORIC_MAX_CMD_SIZE - j );
+		strfmt_end( liboric_cmd, j, LIBORIC_MAX_CMD_SIZE );
 		liboric_basic( liboric_cmd );
 		// Error handling
 		switch( liboric_error_nd( ) ) {
@@ -457,8 +691,8 @@ void textedit_event( uint8_t c ) {
 		if ( textedit_password ) {
 			textedit_status_print( "DECRYPTING.." );
 			chacha_process( (uint8_t*)&textstore.magic, 
-							textstore_sizeof( ) - ( (uint16_t)&textstore.magic - (uint16_t)&textstore ),
-							(uint8_t*)textedit_password, 
+							textedit_fsize - ( (uint16_t)&textstore.magic - (uint16_t)&textstore ),
+							textedit_cipher_key, 
 							textstore.nonce, 
 							0 );
 		}
@@ -864,6 +1098,7 @@ void textedit_screen_refresh( void ) {
 
 // Refresh status line
 void textedit_status_refresh( void ) {
+	uint8_t	i;										// Column the next field starts at
 	char saved, *state;
 	static char inverse[] = "INV";
 	static char normal[] = "STD";
@@ -890,17 +1125,41 @@ void textedit_status_refresh( void ) {
 		state = normal;
 	}
 
+	// The whole line is blanked first, so that every field is padded.
+	// The name used to be padded by the %-13s of a format string, and
+	// nothing pads it now: without this, whatever the previous message
+	// left in the columns the name does not fill stays on show
+	memset( textedit_status, LIBSCREEN_SPACE, LIBSCREEN_NB_COLS );
+
 	// Insert blue paper code
 	textedit_status[0] = LIBSCREEN_BLUE_PAPER;
 
-	snprintf( 	&textedit_status[1], 
-				LIBSCREEN_NB_COLS, 
-				"%-13s%c %03d%% %s [CTRL]-G>>HELP",  
-				textedit_filename,
-				saved,
-				( textstore.nblines * 100 ) / TEXTSTORE_LINES_MAX,
-				state );
-	textedit_status[strlen(textedit_status)] = LIBSCREEN_SPACE;
+	// File name, truncated to the width of its field
+	strfmt_copy( &textedit_status[TEXTEDIT_STATUS_TEXT_BASE],
+				 textedit_filename,
+				 TEXTEDIT_STATUS_NAME_WIDTH );
+	i = TEXTEDIT_STATUS_TEXT_BASE + TEXTEDIT_STATUS_NAME_WIDTH;
+
+	// Modification mark
+	i += strfmt_char( &textedit_status[i], saved, LIBSCREEN_NB_COLS - i );
+	i += strfmt_char( &textedit_status[i], LIBSCREEN_SPACE, LIBSCREEN_NB_COLS - i );
+
+	// Share of the text memory in use
+	i += strfmt_number( &textedit_status[i],
+						( textstore.nblines * TEXTEDIT_STATUS_PERCENT_FULL ) /
+						TEXTSTORE_LINES_MAX,
+						TEXTEDIT_STATUS_PERCENT_DIGITS,
+						LIBSCREEN_NB_COLS - i );
+	i += strfmt_char( &textedit_status[i], TEXTEDIT_STATUS_PERCENT_SIGN,
+					  LIBSCREEN_NB_COLS - i );
+	i += strfmt_char( &textedit_status[i], LIBSCREEN_SPACE, LIBSCREEN_NB_COLS - i );
+
+	// Character mode
+	i += strfmt_copy( &textedit_status[i], state, LIBSCREEN_NB_COLS - i );
+	i += strfmt_char( &textedit_status[i], LIBSCREEN_SPACE, LIBSCREEN_NB_COLS - i );
+
+	// Reminder of the shortcut opening the user guide
+	strfmt_copy( &textedit_status[i], TEXTEDIT_STATUS_HELP_HINT, LIBSCREEN_NB_COLS - i );
 	libscreen_copyline( TEXTEDIT_STATUSSCR_BASE, (uint8_t*)textedit_status );
 }
 

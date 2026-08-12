@@ -6,6 +6,8 @@
 #define __LIBORIC_H__
 
 #define LIBORIC_MAX_CMD_SIZE					40
+#define LIBORIC_ERROR_PREFIX	"?"					// Opens a Sedoric error message
+#define LIBORIC_ERROR_SUFFIX	" ERROR\n"			// Closes it
 
 #define SEDORIC_LAST_ERROR_CODE					0x4FD
 

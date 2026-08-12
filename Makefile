@@ -14,7 +14,7 @@ INIT       = 'CLS:PRINT CHR$$(20):GRAB:TED'
 START      = 1536
 SYMBOLS    = sym
 
-MAJOR_VER  = 2.0
+MAJOR_VER  = 3.0
 VERSION    = "$(MAJOR_VER).$(shell date '+%y%m%d%H')"
 
 CC65       ?= $(CC65_HOME)/bin/cc65

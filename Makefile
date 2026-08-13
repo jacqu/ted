@@ -2,14 +2,17 @@
 # You can also directly redefine CC65, CA65 and LD65
 # before calling make
 CC65_HOME  ?= /Users/jacques/Personnel/Retro/Oric/CC65/cc65
-TOOLS_HOME ?= /Users/jacques/Personnel/Retro/Oric/osdk/osdk/main
-HXC_HOME   ?= /Users/jacques/Personnel/Retro/Oric/Microdisc/HxCFloppyEmulator
 EMULATE    ?= /usr/bin/open -n /Applications/Clock\ Signal.app
 # End of user customizable section
 
 C_SOURCES  = chacha20_c.c blake2s_c.c strfmt.c textstore.c textedit.c liboric_c.c libscreen.c ed.c
 A_SOURCES  = liboric.s libconsole.s chacha20.s blake2s.s
 PROGRAM    = ted
+PYTHON     ?= python3
+
+DOC_SOURCE = README.txt
+DOC_TARGET = readme.ted
+TEXTSTORE  = _textstore
 INIT       = 'CLS:PRINT CHR$$(20):GRAB:TED'
 START      = 1536
 SYMBOLS    = sym
@@ -31,15 +34,14 @@ CFLAGS     = -DTED_VERSION=\"$(VERSION)\" -D__ATMOS__ --standard cc65 -DSTART_AD
 CAFLAGS    = -g
 LDFLAGS    = -C ./atmos_ted.cfg -L$(CC65_HOME)/lib $(CC65_HOME)/lib/atmos.lib -D__START_ADDRESS__=$(START) -Ln $(SYMBOLS)
 RM         = /bin/rm -f
-HEADER     = $(TOOLS_HOME)/header/header
-TAP2DSK    = $(TOOLS_HOME)/tap2dsk/tap2dsk
-OLD2MFM    = $(TOOLS_HOME)/old2mfm/old2mfm
-HXCFE      = $(HXC_HOME)/build/hxcfe
+SED_IMPORT = /usr/local/bin/sedoric-import
 
 ########################################
 .SUFFIXES:
 .PHONY: all clean run
 all: $(PROGRAM).hfe
+
+doc: $(DOC_TARGET)
 
 # Every module is rebuilt when any header changes: a stale object file
 # after a header has moved a field is a bug that takes a long time to
@@ -68,21 +70,19 @@ libscreen.i: CODESIZE = $(CODESIZE_FAST)
 $(PROGRAM): $(C_SOURCES:.c=.o) $(A_SOURCES:.s=.o)
 	$(LD65) -o $@ $^ $(LDFLAGS)
 
-$(PROGRAM).tap: $(PROGRAM)
-	$(HEADER) $(PROGRAM) $(PROGRAM).tap $(START)
+$(DOC_TARGET): $(PROGRAM) $(DOC_SOURCE)
+	$(PYTHON) tools/tedtool.py --oric from-text $(DOC_SOURCE) $(DOC_TARGET) \
+		--address `$(PYTHON) tools/symaddr.py $(SYMBOLS) $(TEXTSTORE)`
 
-$(PROGRAM).dsk: $(PROGRAM).tap
-	$(TAP2DSK) -i$(INIT) -n$(PROGRAM) $(PROGRAM).tap $(PROGRAM).dsk
-	$(OLD2MFM) $(PROGRAM).dsk
-
-$(PROGRAM).hfe: $(PROGRAM).dsk
-	$(HXCFE) -finput:$(PROGRAM).dsk -conv:HXC_HFE -foutput:$(PROGRAM).hfe
+$(PROGRAM).hfe: $(PROGRAM) $(DOC_TARGET)
+	$(SED_IMPORT) -n -f 80d -L $(PROGRAM) -N $(PROGRAM).COM -I $(INIT) -T binary -A $(START) -E $(START) $(PROGRAM).hfe $(PROGRAM)
+	$(SED_IMPORT) -N $(DOC_TARGET) -T binary -A `$(PYTHON) tools/symaddr.py $(SYMBOLS) $(TEXTSTORE)` -E $(START) $(PROGRAM).hfe $(DOC_TARGET)
 
 run: $(PROGRAM).hfe
-	$(EMULATE) $(PROGRAM).dsk
+	$(EMULATE) $(PROGRAM).hfe
 
 clean:
-	$(RM) $(C_SOURCES:.c=.i) $(C_SOURCES:.c=.o) $(A_SOURCES:.s=.o) $(PROGRAM) $(PROGRAM).tap $(PROGRAM).dsk $(PROGRAM).hfe $(SYMBOLS)
+	$(RM) $(C_SOURCES:.c=.i) $(C_SOURCES:.c=.o) $(A_SOURCES:.s=.o) $(PROGRAM) $(PROGRAM).hfe $(DOC_TARGET) $(SYMBOLS)
 
 # Avoid removing .i files
 .PRECIOUS: %.i

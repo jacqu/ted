@@ -46,7 +46,7 @@ SED_IMPORT = /usr/local/bin/sedoric-import
 ########################################
 .SUFFIXES:
 .PHONY: all clean run
-all: $(PROGRAM).hfe
+all: $(PROGRAM).dsk
 
 doc: $(DOC_TARGET)
 
@@ -84,6 +84,9 @@ $(DOC_TARGET): $(PROGRAM) $(DOC_SOURCE)
 $(PROGRAM).hfe: $(PROGRAM) $(DOC_TARGET)
 	$(SED_IMPORT) -n -f 80d -L $(PROGRAM) -N $(PROGRAM).COM -I $(INIT) -T binary -A $(START) -E $(START) $(PROGRAM).hfe $(PROGRAM)
 	$(SED_IMPORT) -N $(DOC_TARGET) -T binary -A `$(PYTHON) tools/symaddr.py $(SYMBOLS) $(TEXTSTORE)` -E $(START) $(PROGRAM).hfe $(DOC_TARGET)
+
+$(PROGRAM).dsk:	$(PROGRAM).hfe
+	hfe2dsk $(PROGRAM).hfe $(PROGRAM).dsk
 
 run: $(PROGRAM).hfe
 	$(EMULATE) $(PROGRAM).hfe

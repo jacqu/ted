@@ -5,7 +5,7 @@ CC65_HOME  ?= /Users/jacques/Personnel/Retro/Oric/CC65/cc65
 EMULATE    ?= /usr/bin/open -n /Applications/Clock\ Signal.app
 # End of user customizable section
 
-C_SOURCES  = chacha20_c.c blake2s_c.c strfmt.c textstore.c textedit.c liboric_c.c libscreen.c ed.c
+C_SOURCES  = chacha20_c.c blake2s_c.c libcanary.c strfmt.c textstore.c textedit.c liboric_c.c libscreen.c ed.c
 A_SOURCES  = liboric.s libconsole.s chacha20.s blake2s.s
 PROGRAM    = ted
 PYTHON     ?= python3
@@ -28,9 +28,16 @@ LD65       ?= $(CC65_HOME)/bin/ld65
 # keystroke; everything else runs once per file or once per session, and
 # is compiled for size instead
 CODESIZE       = 100								# Cold modules, compiled small
-CODESIZE_FAST  = 500								# Modules on the keystroke path
+# The canary build carries a few hundred bytes more, which the Atmos does
+# not have to spare, so it gives up some of the speed instead
+CODESIZE_FAST  = $(if $(CANARY),100,500)			# Modules on the keystroke path
 
-CFLAGS     = -DTED_VERSION=\"$(VERSION)\" -D__ATMOS__ --standard cc65 -DSTART_ADDRESS=$(START) -Oirs $(STATIC_LOCALS) --codesize $(CODESIZE) -T -g -t atmos
+# make CANARY=1 builds a version that paints the memory the stacks live
+# in and stops with the address as soon as anything else writes there
+CANARY     ?=
+CANARY_FLAG = $(if $(CANARY),-DTED_CANARY,)
+
+CFLAGS     = $(CANARY_FLAG) -DTED_VERSION=\"$(VERSION)\" -D__ATMOS__ --standard cc65 -DSTART_ADDRESS=$(START) -Oirs $(STATIC_LOCALS) --codesize $(CODESIZE) -T -g -t atmos
 CAFLAGS    = -g
 LDFLAGS    = -C ./atmos_ted.cfg -L$(CC65_HOME)/lib $(CC65_HOME)/lib/atmos.lib -D__START_ADDRESS__=$(START) -Ln $(SYMBOLS)
 RM         = /bin/rm -f

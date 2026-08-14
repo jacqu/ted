@@ -76,6 +76,10 @@
 #define TEXTEDIT_STATUS_GUIDE_TITLE	"          U S E R    G U I D E          "
 													// Title of the help screen
 
+/* Reported when the memory watched by libcanary has been written to */
+#define TEXTEDIT_CANARY_MESSAGE		"MEMORY TOUCHED AT "
+#define TEXTEDIT_CANARY_DIGITS		5				// Digits of a sixteen bit address
+
 /* Pieces the Sedoric commands are built out of */
 #define TEXTEDIT_LOAD_COMMAND		"LOAD\""		// Read a file back at a given address
 #define TEXTEDIT_LOAD_ADDRESS		"\",A"			// Where it has to land
@@ -147,7 +151,7 @@ void 	textedit_mem_full		( void );
  * samples, and the mixing is left to BLAKE2s at the moment the nonce *
  * is derived from it.                                                *
  * ------------------------------------------------------------------ */
-#define TEXTEDIT_ENTROPY_SZ			6				// Bytes a single sample carries
+#define TEXTEDIT_ENTROPY_SZ			5				// Bytes a single sample carries
 #define TEXTEDIT_POOL_SZ			32				// Bytes of the pool the samples pile into
 #define TEXTEDIT_POOL_MASK			31				// Wraps an index around the pool
 

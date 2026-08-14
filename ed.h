@@ -14,9 +14,18 @@
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
 // Global defines
-#define ED_ORIC_VIA_TIM1		0x304		//  Timer 1 register address of VIA
-#define ED_ORIC_VIA_TIM2		0x308		// 	Timer 2 register address of VIA
-#define ED_ORIC_ULA_TIM			0x276		//	ULA system timer register
+/* Reading the LOW counter of a 6522 timer acknowledges that timer's
+** interrupt: the flag is cleared as a side effect of the read. The ROM
+** drives its own interrupt from timer 1, and that interrupt is what
+** scans the keyboard and advances the timer below, so reading $0304 or
+** $0308 steals an interrupt from the ROM whenever the read falls between
+** the timer expiring and the handler acknowledging it. The high counters
+** and the timer the ROM keeps in memory carry the same unpredictability
+** and have no side effect at all, so those are the ones sampled. */
+#define ED_ORIC_VIA_T1_HIGH		0x305		//	Timer 1 counter of the VIA, high byte
+#define ED_ORIC_VIA_T2_HIGH		0x309		//	Timer 2 counter of the VIA, high byte
+#define ED_ORIC_ULA_TIM			0x276		//	Three byte timer advanced by the ROM
+#define ED_ORIC_ULA_TIM_SZ		3			//	Bytes of that timer
 
 /* Pieces of the messages printed on the console, now that they are put *
  * together by hand rather than by the printf family                    */

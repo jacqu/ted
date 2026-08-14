@@ -16,6 +16,7 @@
 #include "textstore.h"
 #include "textedit.h"
 #include "strfmt.h"
+#include "libcanary.h"
 #include "ed.h"
 
 #define 		TEXTEDIT_UNUSED(x) (void)(x)
@@ -215,6 +216,11 @@ void textedit_init( char* filename, char* password ) {
 
 
 	// Give each use of the password its own key before anything is read
+
+#ifdef TED_CANARY
+	// Paint the memory that is going to be watched
+	libcanary_init( );
+#endif
 
 	textedit_keys_derive( );
 
@@ -438,16 +444,16 @@ static bool textedit_console_YN( const char *question ) {
 // The two timers of the VIA and the one of the ULA are the only things
 // on an Atmos that are not the same from one run to the next
 static void textedit_entropy( uint8_t *sample ) {
-	uint8_t	*via1 = (uint8_t*)ED_ORIC_VIA_TIM1;
-	uint8_t	*via2 = (uint8_t*)ED_ORIC_VIA_TIM2;
+	uint8_t	*timer1 = (uint8_t*)ED_ORIC_VIA_T1_HIGH;
+	uint8_t	*timer2 = (uint8_t*)ED_ORIC_VIA_T2_HIGH;
 	uint8_t	*tim = (uint8_t*)ED_ORIC_ULA_TIM;
+	uint8_t	i;
 
-	sample[0] = via1[0];
-	sample[1] = via1[1];
-	sample[2] = via2[0];
-	sample[3] = via2[1];
-	sample[4] = tim[0];
-	sample[5] = tim[1];
+	sample[0] = *timer1;
+	sample[1] = *timer2;
+	for ( i = 0; i < ED_ORIC_ULA_TIM_SZ; i++ ) {
+		sample[2+i] = tim[i];
+	}
 }
 
 // Pile bytes into the entropy pool
@@ -1076,11 +1082,87 @@ void textedit_event( uint8_t c ) {
 }
 
 // Text screen refresh
+// Bring the position back inside the text
+// Nothing should ever put it outside, and everything below assumes it is
+// inside: an index past the end makes the subtraction guarding the fast
+// display path wrap round, the test then passes, and the display reads
+// line pointers that do not exist. Whatever went wrong upstream, the
+// damage stops here rather than turning into a screen full of whatever
+// happened to be in memory
+static void textedit_clamp( void ) {
+
+	if ( !textstore.nblines ) {
+		textedit_spntr = 0;
+		textedit_lpntr = 0;
+		textedit_cur_y = TEXTEDIT_EDITORSCR_BASE;
+		return;
+	}
+
+	// The cursor cannot sit past the last line
+	if ( textedit_lpntr >= textstore.nblines ) {
+		textedit_lpntr = textstore.nblines - 1;
+	}
+
+	// The first line shown cannot be below the cursor, nor so far above
+	// it that the cursor falls off the bottom of the screen
+	if ( textedit_spntr > textedit_lpntr ) {
+		textedit_spntr = textedit_lpntr;
+	}
+	if ( textedit_lpntr - textedit_spntr >= TEXTEDIT_EDITORSCR_SZ ) {
+		textedit_spntr = textedit_lpntr - ( TEXTEDIT_EDITORSCR_SZ - 1 );
+	}
+
+	// The row of the cursor follows from the two, but it is only put back
+	// when it says something impossible: the editor moves the three of
+	// them in an order of its own, and a refresh may well happen while
+	// they are on their way to agreeing again
+	if ( ( textedit_cur_y < TEXTEDIT_EDITORSCR_BASE ) ||
+		 ( textedit_cur_y >= TEXTEDIT_EDITORSCR_BASE + TEXTEDIT_EDITORSCR_SZ ) ) {
+		textedit_cur_y = (uint8_t)( TEXTEDIT_EDITORSCR_BASE +
+									( textedit_lpntr - textedit_spntr ) );
+	}
+}
+
+#ifdef TED_CANARY
+// Say where the memory was touched and go no further
+// Carrying on would only pile more damage on top of the evidence, and
+// the address of the first byte that changed is usually enough to name
+// what wrote there
+static void textedit_canary_stop( uint16_t where ) {
+	char	message[LIBSCREEN_NB_COLS+1];
+	uint8_t	i;
+
+	i = strfmt_copy( message, TEXTEDIT_CANARY_MESSAGE, LIBSCREEN_NB_COLS );
+	i += strfmt_number( &message[i], where, TEXTEDIT_CANARY_DIGITS,
+						LIBSCREEN_NB_COLS - i );
+	strfmt_end( message, i, sizeof( message ) );
+
+	for ( ;; ) {
+		textedit_status_print( message );
+	}
+}
+#endif
+
 void textedit_screen_refresh( void ) {
 	register uint8_t i;
+#ifdef TED_CANARY
+	uint16_t		touched;
+#endif
+
+	// Refuse to draw from a position that does not exist
+	textedit_clamp( );
+
+#ifdef TED_CANARY
+	// Has anybody written where nobody should ?
+	touched = libcanary_check( );
+	if ( touched != LIBCANARY_INTACT ) {
+		textedit_canary_stop( touched );
+	}
+#endif
 
 	// Refresh text portion of the screen
-	if ( textstore.nblines - textedit_spntr >= TEXTEDIT_EDITORSCR_SZ ) {
+	if ( ( textedit_spntr <= textstore.nblines ) &&
+		 ( textstore.nblines - textedit_spntr >= TEXTEDIT_EDITORSCR_SZ ) ) {
 		libscreen_display( textedit_spntr, textstore.tlpt );
 	}
 	else {

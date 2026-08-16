@@ -44,6 +44,13 @@ uint8_t			textedit_cur_x = 0;
 uint8_t			textedit_cur_y = TEXTEDIT_EDITORSCR_BASE;
 uint16_t		textedit_lpntr = TEXTEDIT_TEXT_BASE;
 uint16_t		textedit_spntr = TEXTEDIT_TEXT_BASE;
+// The status line, one byte per column and one to spare
+// This is an array of characters and not a string: the routines that
+// fill it blank it to its full width and then write over the blanks,
+// without ever laying down a terminator, and libscreen_copyline_inv
+// takes a fixed number of columns rather than looking for one. Anything
+// treating it as a string, strlen and the %s of printf being the two
+// obvious ones, would read past the end of it. Use strfmt_end first
 char			textedit_status[LIBSCREEN_NB_COLS+1];
 uint8_t			textedit_copy_buf[TEXTSTORE_LINE_SIZE];
 uint8_t			textedit_copy_buf_sz = 0;

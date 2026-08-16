@@ -115,6 +115,8 @@
 extern uint8_t 						textedit_cur_y;	// Vertical cursor position on the screen. First line is 0.
 extern uint16_t						textedit_lpntr;	// Current line position in the scrolled text
 extern uint8_t 						textedit_cur_x;	// Horizontal cursor position on the screen. First col is 0.
+// Status line, an array of characters rather than a string.
+// See its definition in textedit.c before treating it as one
 extern char							textedit_status[LIBSCREEN_NB_COLS+1];
 													// Status line buffer
 extern uint32_t 					textedit_sc_counter;
